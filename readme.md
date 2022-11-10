@@ -13,7 +13,7 @@ Selecting a tool doesn't need an explanation: click on an icon and you are good 
 
 > **Neat detail:** you don't *have* to select a tool. When clicking *outside* the active mode panel (marked with the colored dot), you just switch modes. Like you would with the default pie menu.
 > 
-> ![Selecting mode only](_develop/docs/gp_tool_wheel_selecting_mode.png)
+> ![Selecting mode only](docs/images/gp_tool_wheel_selecting_mode.png)
 
 
 ## Customize your wheel
@@ -31,17 +31,17 @@ It's recommended to change the keyboard shortcut when you don't include all the 
 
 
 ## Installation
-GP Tool Wheel is tested with Blender 3.0 and higher.
+GP Tool Wheel is suited for Blender 3.0 and higher.
 
 Installation of the add-on is done in the usual way:
-- Download the latest release. (Make sure it is a zip file, not automatically unzipped.)
-- In Blender, go to `Edit` > `Preferences` > `Add-ons`. Click on `Install...`. Select the zip file.
+- Download [the latest release](https://github.com/SietseB/GP-Tool-Wheel/releases/tag/v1.0.0). (Make sure it is a zip file, not automatically unzipped.)
+- In Blender, go to `Edit` > `Preferences` > `Add-ons`. Click on `Install...` and select the zip file.
 - When the stars are in your favour, the add-on appears. Activate it.
 - And since you are here: click on the add-on arrow and take a look at the preferences straight away.
 
 
 ## Having issues? Or wishes?
-Create a ticket and I'll see what I can do.
+[Create a ticket](https://github.com/SietseB/GP-Tool-Wheel/issues) and I'll see what I can do.
 
 
 ## Changelog
