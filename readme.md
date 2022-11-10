@@ -17,7 +17,9 @@ Selecting a tool doesn't need an explanation: click on an icon and you are good 
 
 
 ## Customize your wheel
-In the preferences of the add-on you can create your ideal, tailor made wheel. Perhaps you want to change it in a kind of 'Quick favorites' menu, with only the modes and tools you often use.
+For the add-on preferences, go to `Edit` > `Preferences...` > `Add-ons` and look for `3D View: GP Tool Wheel`. Click on the arrow on the left.
+
+Here you can compose your ideal, tailor made wheel. Perhaps you want to change it in a kind of 'Quick favorites' menu, with only the modes and tools you often use.
 
 It's recommended to change the keyboard shortcut when you don't include all the modes in your wheel.
 
@@ -29,13 +31,17 @@ It's recommended to change the keyboard shortcut when you don't include all the 
 > 
 > ![GP Tool Wheel Preferences select you tools](docs/images/gp_tool_wheel_preferences_2.png)
 
+> **Example of customized wheel:**
+>
+> ![Example of customized wheel](docs/images/gp_tool_wheel_customized_example.png)
+
 
 ## Installation
 GP Tool Wheel is suited for Blender 3.0 and higher.
 
 Installation of the add-on is done in the usual way:
 - Download [the latest release](https://github.com/SietseB/GP-Tool-Wheel/releases/tag/v1.0.0). (Make sure it is a zip file, not automatically unzipped.)
-- In Blender, go to `Edit` > `Preferences` > `Add-ons`. Click on `Install...` and select the zip file.
+- In Blender, go to `Edit` > `Preferences...` > `Add-ons`. Click on `Install...` and select the zip file.
 - When the stars are in your favour, the add-on appears. Activate it.
 - And since you are here: click on the add-on arrow and take a look at the preferences straight away.
 

@@ -4,9 +4,9 @@ bl_info = {
     "version": (1, 0, 0),
     "blender": (3, 0, 0),
     "description": "Extended pie menu for selecting Grease Pencil tools quickly.",
-    "doc_url": "",
-    "tracker_url": "",
-    "category": "3D View",
+    "doc_url": "https://github.com/SietseB/GP-Tool-Wheel",
+    "tracker_url": "https://github.com/SietseB/GP-Tool-Wheel/issues",
+    "category": "3D View"
 }
 
 
