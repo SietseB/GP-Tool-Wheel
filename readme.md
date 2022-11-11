@@ -41,7 +41,7 @@ It's recommended to change the keyboard shortcut when you don't include all the 
 ## Installation
 GP Tool Wheel is suited for Blender 3.0 and higher.
 
-Installation of the add-on is done in the usual way:
+Installation of the add-on is done in the usual Blender way:
 - Download [the latest release](https://github.com/SietseB/GP-Tool-Wheel/releases). (Make sure it is a zip file, not automatically unzipped.)
 - In Blender, go to `Edit` > `Preferences...` > `Add-ons`. Click on `Install...` and select the zip file.
 - When the stars are in your favour, the add-on appears. Activate it.
