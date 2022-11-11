@@ -53,6 +53,8 @@ Installation of the add-on is done in the usual Blender way:
 
 
 ## Changelog
+- v1.0.2 – 2022-11-11
+  - Fixed: active panel too bright in lower versions of Blender
 - v1.0.1 – 2022-11-11
   - Number keys 1..6 added for switching mode only (like in the default pie menu)
   - Fixed: tool wheel could be partially hidden when near the toolbar or n-panel
