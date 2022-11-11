@@ -22,6 +22,57 @@ class GPENCIL_OT_tool_wheel(Operator):
                 and context.area and context.area.type == 'VIEW_3D')
 
 
+    # Switch to new mode and tool
+    def switch_mode_and_tool(self, context, new_mode, new_tool):
+        # Clean up wheel
+        self.ended(context)
+        
+        # No active mode selected?
+        if new_mode == '':
+            return {'CANCELLED'}
+        
+        # Get selected mode
+        mode = td.tools_per_mode[new_mode]
+        
+        # Switch to mode
+        if mode['mode'] != context.mode:
+            match(new_mode):
+                case 'object':
+                    bpy.ops.object.mode_set(mode='OBJECT')
+                case 'edit':
+                    bpy.ops.gpencil.editmode_toggle()
+                case 'sculpt':
+                    bpy.ops.gpencil.sculptmode_toggle()
+                case 'draw':
+                    bpy.ops.gpencil.paintmode_toggle()
+                case 'weight':
+                    bpy.ops.gpencil.weightmode_toggle()
+                case 'vertex':
+                    bpy.ops.gpencil.vertexmode_toggle()
+        elif new_tool == -1:
+            return {'CANCELLED'}
+        
+        # Switch to tool
+        if new_tool != -1:
+            tool = td.tools_per_mode[new_mode]['tools'][new_tool]['tool']
+            # Handle 'add' tools
+            if tool.startswith('add.'):
+                match tool:
+                    case 'add.empty':
+                        bpy.ops.object.empty_add(radius=0.1)
+                    case 'add.bone':
+                        bpy.ops.object.armature_add(radius=0.4)
+                    case 'add.gp.stroke':
+                        bpy.ops.object.gpencil_add(type='STROKE')
+                    case 'add.gp.empty':
+                        bpy.ops.object.gpencil_add(type='EMPTY')
+            else:
+                # Switch to tool
+                bpy.ops.wm.tool_set_by_id(name=tool)
+        
+        return {'FINISHED'}
+        
+        
     # Check modal events    
     def modal(self, context, event):
         # Abort?
@@ -29,53 +80,13 @@ class GPENCIL_OT_tool_wheel(Operator):
             self.ended(context)
             return {'CANCELLED'}
         
+        # Handle mode hotkeys
+        if event.type in td.mode_of_hotkey:
+            return self.switch_mode_and_tool(context, td.mode_of_hotkey[event.type], -1)
+        
         # Handle left mouse click
         if event.type == 'LEFTMOUSE':
-            self.ended(context)
-            
-            # No active mode selected?
-            if tool_wheel.active_mode == '':
-                return {'CANCELLED'}
-            
-            # Get selected mode
-            mode = td.tools_per_mode[tool_wheel.active_mode]
-            
-            # Switch mode
-            if mode['mode'] != context.mode:
-                match(tool_wheel.active_mode):
-                    case 'object':
-                        bpy.ops.object.mode_set(mode='OBJECT')
-                    case 'edit':
-                        bpy.ops.gpencil.editmode_toggle()
-                    case 'sculpt':
-                        bpy.ops.gpencil.sculptmode_toggle()
-                    case 'draw':
-                        bpy.ops.gpencil.paintmode_toggle()
-                    case 'weight':
-                        bpy.ops.gpencil.weightmode_toggle()
-                    case 'vertex':
-                        bpy.ops.gpencil.vertexmode_toggle()
-            elif tool_wheel.active_tool == -1:
-                return {'CANCELLED'}
-            
-            # Switch to tool
-            if tool_wheel.active_tool != -1:
-                tool = td.tools_per_mode[tool_wheel.active_mode]['tools'][tool_wheel.active_tool]['tool']
-                # Handle 'add' tools
-                if tool.startswith('add.'):
-                    match tool:
-                        case 'add.empty':
-                            bpy.ops.object.empty_add(radius=0.1)
-                        case 'add.bone':
-                            bpy.ops.object.armature_add(radius=0.4)
-                        case 'add.gp.stroke':
-                            bpy.ops.object.gpencil_add(type='STROKE')
-                        case 'add.gp.empty':
-                            bpy.ops.object.gpencil_add(type='EMPTY')
-                else:
-                    bpy.ops.wm.tool_set_by_id(name=tool)
-            
-            return {'FINISHED'}
+            return self.switch_mode_and_tool(context, tool_wheel.active_mode, tool_wheel.active_tool)
         
         # Redraw area on mouse move
         if event.type == 'MOUSEMOVE':

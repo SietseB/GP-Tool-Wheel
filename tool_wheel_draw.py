@@ -35,7 +35,7 @@ class ModeBox():
     BUTTONS_PER_ROW = 4
     TITLE_HEIGHT = 18
     
-    def __init__(self, mode, box_index, tool_count):
+    def __init__(self, mode, box_index, tool_count, hotkey):
         self.x = 0
         self.y = 0
         self.row_count = math.ceil(tool_count / self.BUTTONS_PER_ROW)
@@ -46,6 +46,7 @@ class ModeBox():
         self.upwards = box_index in {0, 1, 2}
         self.mode = mode
         self.index = box_index
+        self.hotkey = str(hotkey)
         self.tool_buttons = []
         self.title_x = 0
         self.title_y = 0
@@ -96,6 +97,10 @@ class ToolWheel():
     def prepare(self, event, area, context):
         box: ModeBox
         
+        # Init
+        self.active_mode = ''
+        self.active_tool = -1
+        
         # Store area and wheel center
         self.area = area
         self.center_x = event.mouse_region_x
@@ -111,9 +116,9 @@ class ToolWheel():
         
         # Create draw boxes for active modes
         self.boxes = []
-        for mode, box_index in td.active_modes:
+        for mode, box_index, hotkey in td.active_modes:
             tool_count = len(td.tools_per_mode[mode]['active_tools'])
-            box = ModeBox(mode, box_index, tool_count)
+            box = ModeBox(mode, box_index, tool_count, hotkey)
             self.boxes.append(box)
         
         # No active modes (unlikely, but we have to check)
@@ -163,16 +168,25 @@ class ToolWheel():
             max_x = max(max_x, box.x + box.w)
             max_y = max(max_y, box.y)
         
+        # Get width of toolbar and n-panel
+        left_padding = 3
+        right_padding = 3
+        for region in area.regions:
+            if region.alignment == 'LEFT' and region.width > left_padding:
+                left_padding = region.width
+            if region.alignment == 'RIGHT' and region.width > right_padding:
+                right_padding = region.width
+        
         # Make sure bounding box is within area bounds
         dx = 0
         dy = 0
-        if min_x < 2:
-            dx = 2 - min_x
+        if min_x < left_padding:
+            dx = left_padding - min_x
             max_x += dx
-        if max_x > area.width - 2:
-            dx = area.width - 2 - max_x
-        if min_y < 2:
-            dy = 2 - min_y
+        if max_x > area.width - right_padding:
+            dx = area.width - right_padding - max_x
+        if min_y < 3:
+            dy = 3 - min_y
             max_y += dy
         if max_y > area.height - 54:
             dy = area.height - 54 - max_y
@@ -237,11 +251,10 @@ class ToolWheel():
         hint_color[3] = 0.98
         self.box_color = self.get_adjusted_color(box_color, -0.05)
         self.tool_bg_color = self.get_adjusted_color(self.box_color, 0.05)
-        self.box_color_selected = self.get_adjusted_color(box_color, -0.02)
-        self.tool_bg_color_selected = self.get_adjusted_color(box_color, 0.1)
+        self.box_color_selected = self.get_adjusted_color(box_color, -0.12)
+        self.tool_bg_color_selected = self.get_adjusted_color(box_color, 0.08)
         self.text_color = pie_colors.text
-        self.highlight_color_soft = list(pie_colors.inner_sel)
-        self.highlight_color_soft[3] = 0.3
+        self.highlight_color = self.get_adjusted_color(box_color, 0.2)
         
         # Init shaders
         self.shader_icon_bg = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
@@ -350,7 +363,7 @@ class ToolWheel():
             draw_texture_2d(box.texture, (box.x, box.y - box.h), box.w, box.h)
             
             # Lighten box when selected
-            box_is_selected = significant_angle and box.mode == self.active_mode
+            box_is_selected = box.mode == self.active_mode
             if box_is_selected:
                 gpu.state.blend_set('ADDITIVE')
                 verts = ((box.x, box.y), (box.x + box.w, box.y), (box.x, box.y - box.h), (box.x + box.w, box.y - box.h))
@@ -374,7 +387,7 @@ class ToolWheel():
                 gpu.matrix.push()
                 gpu.matrix.translate((button.x + button.BUTTON_IMG_PADDING, button.y - button.BUTTON_IMG_PADDING))
                 if is_active:
-                    color = self.highlight_color_soft
+                    color = self.highlight_color
                 elif box_is_selected:
                     color = self.tool_bg_color_selected
                 else:
@@ -399,7 +412,7 @@ class ToolWheel():
             draw_texture_2d(td.textures['active_dot'], (dx, dy), 8, 8)
         
         # Draw dot on active box
-        if significant_angle and active_box is not None:
+        if active_box is not None:
             box = active_box
             match box.index:
                 case 0:
@@ -443,15 +456,25 @@ class ToolWheel():
             blf.position(0, tx, dy + 6, 0)
             blf.draw(0, hint)
         
-        # Draw centered box title
+        # Draw centered box title and hotkey on the right
         for box in self.boxes:
-            title = td.tools_per_mode[box.mode]['name']
-            tw, _ = blf.dimensions(0, title)
+            # Title
+            text = td.tools_per_mode[box.mode]['name']
+            tw, _ = blf.dimensions(0, text)
             dx = int((box.w - tw) * 0.5) - ModeBox.BOX_PADDING
-            alpha = 0.8 if box.mode == self.active_mode and significant_angle else 0.25
+            alpha = 0.8 if box.mode == self.active_mode else 0.25
             blf.color(0, self.text_color[0], self.text_color[1], self.text_color[2], alpha)
             blf.position(0, box.title_x + dx, box.title_y, 0)
-            blf.draw(0, title)
+            blf.draw(0, text)
+            
+            # Hotkey
+            text = box.hotkey
+            tw, _ = blf.dimensions(0, text)
+            dx = box.x + box.w - ModeBox.BOX_PADDING * 2 - tw
+            alpha = 0.4 if box.mode == self.active_mode else 0.15
+            blf.color(0, self.text_color[0], self.text_color[1], self.text_color[2], alpha)
+            blf.position(0, dx, box.title_y, 0)
+            blf.draw(0, text)
         
         # Reset gpu state
         gpu.state.blend_set('NONE')

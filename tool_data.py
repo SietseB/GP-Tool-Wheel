@@ -26,6 +26,8 @@ class ToolData():
         self.textures = {}
         self.modes = ['weight', 'draw', 'vertex', 'edit', 'sculpt', 'object']
         self.modes_in_prefs = ['draw', 'edit', 'sculpt', 'object', 'vertex', 'weight']
+        self.mode_hotkeys = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX']
+        self.mode_of_hotkey = {}
         self.box_by_angle = [2, 1, 1, 0, 5, 4, 4, 3]
         self.mode_order = [0, 1, 2, 3, 4, 5]
         # Which boxes are used for 1/2/3/4/5/6 active modes?
@@ -144,34 +146,41 @@ class ToolData():
         preferences.get_tool_preferences()
         
         # Iterate all modes, in user preferenced order
+        self.mode_of_hotkey = {}
         active_modes = []
         box_i = 0
         for mode_i in self.mode_order:
-            # Collect enabled tools
+            # Get mode
             mode = self.modes[mode_i]
+            
+            # Collect enabled tools
             mode_obj = self.tools_per_mode[mode]
             active_tools = []
             for tool_i, tool in enumerate(mode_obj['tools']):
                 if tool['enabled']:
                     active_tools.append(tool_i)
+            mode_obj['active_tools'] = active_tools
             
             # Add to active modes when one or more tools are enabled
-            mode_obj['active_tools'] = active_tools
             if len(active_tools) > 0:
                 active_modes.append((mode, box_i))
+                
+                # Assign hotkey to mode
+                self.mode_of_hotkey[self.mode_hotkeys[box_i]] = mode
+                
                 box_i += 1
-
+        
         # Get corresponding box layout for number of active modes
         # and set box index belonging to mode
         self.active_modes = []
         active_box_layout = self.box_layouts[len(active_modes)]
         for mode, box_i in active_modes:
-            self.active_modes.append((mode, active_box_layout[box_i]))
+            self.active_modes.append((mode, active_box_layout[box_i], box_i + 1))
 
         # Convert active modes to labels for Preference panel
         box_to_label = [(1, 0), (0, 1), (1, 2), (3, 2), (4, 1), (3, 0)]
         labels = [['', '', ''], ['', '', ''], ['', '', ''], ['', '', ''], ['', '', '']]
-        for mode, box_i in self.active_modes:
+        for mode, box_i, _ in self.active_modes:
             row, col = box_to_label[box_i]
             labels[row][col] = self.tools_per_mode[mode]['name_short']
         labels[2][1] = '○'
