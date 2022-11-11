@@ -51,6 +51,7 @@ class ModeBox():
         self.title_x = 0
         self.title_y = 0
         self.texture = None
+        self.texture_sel = None
 
 
 class ToolWheel():
@@ -245,16 +246,17 @@ class ToolWheel():
         # Get pie menu colors from active theme
         theme = context.preferences.themes.items()[0][0]
         pie_colors = context.preferences.themes[theme].user_interface.wcol_toolbar_item
-        box_color = list(pie_colors.inner)[0:3] + [1]
-        box_title_bg = self.get_adjusted_color(box_color, -0.15)
-        hint_color = self.get_adjusted_color(box_color, 0.25)
+        base_color = list(pie_colors.inner)[0:3] + [1]
+        hint_color = self.get_adjusted_color(base_color, 0.25)
         hint_color[3] = 0.98
-        self.box_color = self.get_adjusted_color(box_color, -0.05)
-        self.tool_bg_color = self.get_adjusted_color(self.box_color, 0.05)
-        self.box_color_selected = self.get_adjusted_color(box_color, -0.12)
-        self.tool_bg_color_selected = self.get_adjusted_color(box_color, 0.08)
+        box_color = self.get_adjusted_color(base_color, -0.05)
+        box_color_sel = self.get_adjusted_color(base_color, 0.02)
+        box_title_bg = self.get_adjusted_color(base_color, -0.15)
+        box_title_bg_sel = self.get_adjusted_color(base_color, -0.1)
+        self.tool_bg_color = self.get_adjusted_color(box_color, 0.05)
+        self.tool_bg_color_sel = self.get_adjusted_color(base_color, 0.08)
         self.text_color = pie_colors.text
-        self.highlight_color = self.get_adjusted_color(box_color, 0.2)
+        self.highlight_color = self.get_adjusted_color(base_color, 0.2)
         
         # Init shaders
         self.shader_icon_bg = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
@@ -271,21 +273,26 @@ class ToolWheel():
             img = bpy.data.images.new('temp_gp_tool_wheel', box.w, box.h, alpha=True)
             img_np = np.empty((box.h, box.w, 4), dtype=np.float32)
             
-            # Fill with box color
-            img_np[:, :] = self.box_color
-            
-            # Darken title area
-            if box.upwards:
-                img_np[-20:] = box_title_bg
-            else:
-                img_np[0:20] = box_title_bg
-            
-            # Get rounded corners
-            self.get_box_rounded_corners(img_np, box.w, box.h)
-            img.pixels.foreach_set(img_np.ravel())
-            
-            # Convert to texture
-            box.texture = gpu.texture.from_image(img)
+            for sel in range(2):
+                # Fill with box color
+                img_np[:, :] = box_color if sel == 0 else box_color_sel
+                
+                # Darken title area
+                color = box_title_bg if sel == 0 else box_title_bg_sel
+                if box.upwards:
+                    img_np[-20:] = color
+                else:
+                    img_np[0:20] = color
+                
+                # Get rounded corners
+                self.get_box_rounded_corners(img_np, box.w, box.h)
+                img.pixels.foreach_set(img_np.ravel())
+                
+                # Convert to texture
+                if sel == 0:
+                    box.texture = gpu.texture.from_image(img)
+                else:
+                    box.texture_sel = gpu.texture.from_image(img)
             
             # Remove image
             bpy.data.images.remove(img)
@@ -313,9 +320,12 @@ class ToolWheel():
 
     
     def end(self):
-        # Delete shaders
+        # Delete shaders and textures
         self.shader_icon_bg = None
         self.batch_icon_bg = None
+        for box in self.boxes:
+            del box.texture
+            del box.texture_sel
     
     
     def draw(self, context):
@@ -359,18 +369,10 @@ class ToolWheel():
         # Iterate boxes (modes)
         active_tool = -1
         for box in self.boxes:
-            # Draw box
-            draw_texture_2d(box.texture, (box.x, box.y - box.h), box.w, box.h)
-            
-            # Lighten box when selected
+            # Draw box (in selected state or not)
             box_is_selected = box.mode == self.active_mode
-            if box_is_selected:
-                gpu.state.blend_set('ADDITIVE')
-                verts = ((box.x, box.y), (box.x + box.w, box.y), (box.x, box.y - box.h), (box.x + box.w, box.y - box.h))
-                batch = batch_for_shader(self.shader_icon_bg, 'TRIS', {'pos': verts}, indices=self.rect_indices)
-                self.shader_icon_bg.uniform_float('color', self.box_color_selected)
-                batch.draw(self.shader_icon_bg)
-                gpu.state.blend_set('ALPHA')
+            texture = box.texture_sel if box_is_selected else box.texture
+            draw_texture_2d(texture, (box.x, box.y - box.h), box.w, box.h)
             
             # Draw tool buttons
             for button in box.tool_buttons:
@@ -386,12 +388,7 @@ class ToolWheel():
                 # Draw tool icon background
                 gpu.matrix.push()
                 gpu.matrix.translate((button.x + button.BUTTON_IMG_PADDING, button.y - button.BUTTON_IMG_PADDING))
-                if is_active:
-                    color = self.highlight_color
-                elif box_is_selected:
-                    color = self.tool_bg_color_selected
-                else:
-                    color = self.tool_bg_color
+                color = self.highlight_color if is_active else (self.tool_bg_color_sel if box_is_selected else self.tool_bg_color)
                 self.shader_icon_bg.uniform_float('color', color)
                 self.batch_icon_bg.draw(self.shader_icon_bg)
                 gpu.matrix.pop()
