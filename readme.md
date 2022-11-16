@@ -33,9 +33,11 @@ It's recommended to change the keyboard shortcut when you don't include all the 
 > 
 > ![GP Tool Wheel Preferences select you tools](docs/images/gp_tool_wheel_preferences_2.png)
 
-> **Example of customized wheel:**
->
-> ![Example of customized wheel](docs/images/gp_tool_wheel_customized_example.png)
+> **Transfer preferences to other computer or Blender installation:**
+> you can save the preferences to a `wheel_definition.json` file and distribute that file to other computers or Blender installations.
+> The file will be saved in the add-on installation directory. Copy this file to the add-on directory of other computers and the preferences will be loaded automatically at startup.
+> 
+> ![Save preferences to definition file](docs/images/gp_tool_wheel_preferences_3.png)
 
 
 ## Installation
@@ -53,10 +55,5 @@ Installation of the add-on is done in the usual Blender way:
 
 
 ## Changelog
-- v1.0.2 – 2022-11-11
-  - Fixed: active panel too bright in lower versions of Blender
-- v1.0.1 – 2022-11-11
-  - Number keys 1..6 added for switching mode only (like in the default pie menu)
-  - Fixed: tool wheel could be partially hidden when near the toolbar or n-panel
-- v1.0.0 – 2022-11-10
+- v1.0.0 – 2022-11-16
   - Initial release

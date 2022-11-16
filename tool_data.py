@@ -15,7 +15,7 @@ from . import preferences
 
 
 class ToolData():
-    ICON_PATH = r'\icons\\'
+    ICON_PATH = path.sep + 'icons' + path.sep
     
     def __init__(self):
         self.keymappings = []
@@ -69,7 +69,7 @@ class ToolData():
                 {'name': 'Curve', 'tool': 'builtin.curve', 'icon': 'draw_curve', 'default': True},
                 {'name': 'Box', 'tool': 'builtin.box', 'icon': 'draw_box', 'default': True},
                 {'name': 'Circle', 'tool': 'builtin.circle', 'icon': 'draw_circle', 'default': True},
-                {'name': 'Interpolate', 'tool': 'builtin.interpolate', 'icon': 'edit_interpolate', 'default': True},
+                {'name': 'Interpolate', 'tool': 'builtin.interpolate', 'icon': 'edit_interpolate', 'default': False},
             ]
         }
         s['vertex'] = {
@@ -101,7 +101,7 @@ class ToolData():
                 {'name': 'Bend', 'tool': 'builtin.bend', 'icon': 'edit_bend', 'default': False},
                 {'name': 'Shear', 'tool': 'builtin.shear', 'icon': 'edit_shear', 'default': False},
                 {'name': 'Transform Fill', 'tool': 'builtin.transform_fill', 'icon': 'edit_transform_fill', 'default': False},
-                {'name': 'Interpolate', 'tool': 'builtin.', 'icon': 'edit_interpolate', 'default': True},
+                {'name': 'Interpolate', 'tool': 'builtin.interpolate', 'icon': 'edit_interpolate', 'default': True},
             ]
         }
         s['sculpt'] = {

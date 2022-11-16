@@ -3,6 +3,10 @@ GP Tool Wheel
 
 Addon preferences
 '''
+
+from os import path
+import json
+
 import bpy
 from bpy.props import BoolProperty, CollectionProperty, IntProperty, StringProperty
 from bpy.types import AddonPreferences, Operator, PropertyGroup, UIList
@@ -108,13 +112,6 @@ class GPTOOLWHEEL_UL_ModeList(UIList):
         layout.label(text=label)
 
 
-# Mode order properties
-class GPToolWheel_PG_mode_order(PropertyGroup):
-    name: StringProperty(name='Mode')
-    order: IntProperty()
-    mode: StringProperty()
-
-
 # Operator for moving mode in Mode order list
 class GPTOOLWHEEL_OT_MoveItem(Operator):
     '''Move an item upwards/downwards'''
@@ -145,6 +142,31 @@ class GPTOOLWHEEL_OT_MoveItem(Operator):
         prefs.mode_order.move(next_index, prefs.mode_index)
         self.move_index()
         return {'FINISHED'}
+
+
+# Operator for saving preference definition
+class GPTOOLWHEEL_OT_SavePrefDefinition(Operator):
+    '''Save preference definition to file'''
+    bl_idname = 'gp_tool_wheel.save_pref_definition'
+    bl_label = 'Save Preferences to Definition File'
+    
+    
+    @classmethod
+    def poll(cls, _):
+        return True
+    
+    
+    def execute(self, _):
+        file = save_preference_definition()
+        self.report({'INFO'}, f'Preference Definition saved to {file}')
+        return {'FINISHED'}
+
+
+# Mode order properties
+class GPToolWheel_PG_mode_order(PropertyGroup):
+    name: StringProperty(name='Mode')
+    order: IntProperty()
+    mode: StringProperty()
 
 
 # Tool properties
@@ -237,7 +259,86 @@ class GPToolWheelPreferences(AddonPreferences):
             col.label(text=td.tools_per_mode[mode]['name'])
             for tool in td.tools_per_mode[mode]['tools']:
                 col.prop(tool['pref'], 'enabled', text=tool['name'])
-            
+        
+        # Save preference definition
+        def_file = path.dirname(path.abspath(__file__)) + path.sep +  'wheel_definition.json'
+        layout.separator(factor=0)
+        box = layout.box()
+        col = box.column(align=True)
+        col.operator('gp_tool_wheel.save_pref_definition')
+        col.separator(factor=1.5)
+        col.label(text='You can save the GP Tool Wheel preferences for distribution to other Blender installations.')
+        col.separator()
+        col.label(text='The preferences will be saved to the following file:')
+        col.label(text=def_file)
+
+
+# Save preference definition to json file
+def save_preference_definition():
+    # Set file name
+    def_file = path.dirname(path.abspath(__file__)) + path.sep +  'wheel_definition.json'
+
+    # Get prefs
+    prefs = bpy.context.preferences.addons[__package__].preferences
+    tools = []
+    for tool in prefs.tools:
+        tools.append((tool.mode, tool.tool_index, tool.enabled))
+    mode_order = []
+    for mode in prefs.mode_order:
+        mode_order.append((mode.name, mode.order, mode.mode))
+    
+    # Compose data object for json
+    data = {
+        'tools': tools,
+        'mode_order': mode_order,
+        'show_hints': prefs.show_hints,
+        'kmi_wheel': (prefs.kmi_is_user_set,
+                      prefs.kmi_key,
+                      prefs.kmi_alt,
+                      prefs.kmi_ctrl,
+                      prefs.kmi_shift,
+                      prefs.kmi_oskey),
+    }
+    
+    # Write json
+    with open(def_file, 'w') as outfile:
+        json.dump(data, outfile, indent=4)
+
+    return def_file
+
+
+# Load preference definition from json file
+def load_preference_definition():
+    # Get prefs
+    prefs = bpy.context.preferences.addons[__package__].preferences
+    
+    # Get file name
+    def_file = path.dirname(path.abspath(__file__)) + path.sep +  'wheel_definition.json'
+    
+    # Definition file exists?
+    if not path.exists(def_file):
+        return False
+    
+    # Read json
+    with open(def_file, 'r') as infile:
+        data = json.load(infile)
+    
+    # Convert data to preference settings
+    prefs.tools.clear()
+    for tool in data['tools']:
+        pref = prefs.tools.add()
+        pref.mode, pref.tool_index, pref.enabled = tool
+    prefs.mode_order.clear()
+    for mode in data['mode_order']:
+        pref = prefs.mode_order.add()
+        pref.name, pref.order, pref.mode = mode
+    prefs.show_hints = data['show_hints']
+    (prefs.kmi_is_user_set,
+     prefs.kmi_key, prefs.kmi_alt,
+     prefs.kmi_ctrl, prefs.kmi_shift, prefs.kmi_oskey) = data['kmi_wheel']
+    
+    return True
+
 
 # When not set already, set default tool preferences
 def set_default_preferences():
@@ -245,7 +346,11 @@ def set_default_preferences():
     addon_prefs = bpy.context.preferences.addons[__package__].preferences
     tool_prefs = addon_prefs.tools
     
-    # When there are no tool preferences, add them
+    # When there are no tool preferences, try to load them from definition file
+    if len(tool_prefs) == 0:
+        load_preference_definition()
+    
+    # When there are still no tool preferences, add them
     if len(tool_prefs) == 0:
         for mode in td.modes:
             for i, tool in enumerate(td.tools_per_mode[mode]['tools']):

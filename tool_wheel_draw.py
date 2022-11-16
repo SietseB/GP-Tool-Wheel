@@ -19,7 +19,7 @@ from .tool_data import tool_data as td
 class ToolButton():
     BUTTON_IMG_SIZE = 32
     BUTTON_IMG_PADDING = 2
-    BUTTON_SIZE = BUTTON_IMG_SIZE + 2 * BUTTON_IMG_PADDING
+    BUTTON_SIZE = BUTTON_IMG_SIZE + 2 * BUTTON_IMG_PADDING + 1
     
     def __init__(self, index):
         self.x = 0
@@ -27,7 +27,8 @@ class ToolButton():
         self.w = self.BUTTON_IMG_SIZE
         self.h = self.BUTTON_IMG_SIZE
         self.tool_index = index
-        self.hint_upwards = True
+        self.separator_right = False
+        self.separator_top = False
 
 
 class ModeBox():
@@ -50,6 +51,7 @@ class ModeBox():
         self.tool_buttons = []
         self.title_x = 0
         self.title_y = 0
+        self.sep_offset = 1 if box_index in {2, 3} else 0
         self.texture = None
         self.texture_sel = None
 
@@ -206,10 +208,9 @@ class ToolWheel():
         for box in self.boxes:
             box.tool_buttons = []
             right_to_left = box.index in {0, 5}
-            dir = -1 if right_to_left else 1
-            row_middle = math.ceil(box.row_count * 0.5) - 1
             row = 0
             column = ModeBox.BUTTONS_PER_ROW - 1 if right_to_left else 0
+            dir = -1 if right_to_left else 1
             for tool_i in td.tools_per_mode[box.mode]['active_tools']:
                 # Create button
                 button = ToolButton(tool_i)
@@ -221,11 +222,10 @@ class ToolWheel():
                 else:
                     button.y = box.y - padding - bsize * row
                 
-                # Set position of hint
-                if box.upwards:
-                    button.hint_upwards = row > row_middle
-                else:
-                    button.hint_upwards = row <= row_middle
+                # Line separator on the right and top?
+                button.separator_right = column != ModeBox.BUTTONS_PER_ROW - 1
+                button.separator_top = column == 0 and ((box.upwards and row < box.row_count - 1) 
+                                                        or (not box.upwards and row > 0))
                 
                 # Append button to mode box
                 box.tool_buttons.append(button)
@@ -245,18 +245,18 @@ class ToolWheel():
 
         # Get pie menu colors from active theme
         theme = context.preferences.themes.items()[0][0]
-        pie_colors = context.preferences.themes[theme].user_interface.wcol_toolbar_item
-        base_color = list(pie_colors.inner)[0:3] + [1]
+        wheel_colors = context.preferences.themes[theme].user_interface.wcol_toolbar_item
+        base_color = list(wheel_colors.inner)[0:3] + [1]
         hint_color = self.get_adjusted_color(base_color, 0.25)
         hint_color[3] = 0.98
-        box_color = self.get_adjusted_color(base_color, -0.05)
-        box_color_sel = self.get_adjusted_color(base_color, 0.02)
-        box_title_bg = self.get_adjusted_color(base_color, -0.15)
-        box_title_bg_sel = self.get_adjusted_color(base_color, -0.1)
-        self.tool_bg_color = self.get_adjusted_color(box_color, 0.05)
-        self.tool_bg_color_sel = self.get_adjusted_color(base_color, 0.08)
-        self.text_color = pie_colors.text
-        self.highlight_color = self.get_adjusted_color(base_color, 0.2)
+        box_color = self.get_adjusted_color(base_color, -0.03)
+        box_color_sel = self.get_adjusted_color(base_color, -0.10)
+        box_title_bg = self.get_adjusted_color(base_color, -0.10)
+        box_title_bg_sel = self.get_adjusted_color(base_color, -0.20)
+        self.sep_color = self.get_adjusted_color(list(wheel_colors.outline)[0:3] + [1], -0.03)
+        self.sep_color_sel = self.get_adjusted_color(self.sep_color, -0.07)
+        self.text_color = wheel_colors.text
+        self.highlight_color = self.get_adjusted_color(base_color, 0.05)
         
         # Init shaders
         self.shader_icon_bg = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
@@ -339,6 +339,7 @@ class ToolWheel():
         # Inits
         ipad = ToolButton.BUTTON_IMG_PADDING
         gpu.state.blend_set('ALPHA')
+        self.active_mode = ''
         
         # Get active mode, based on angle of mouse in the wheel
         dx = self.mouse_x - self.center_x
@@ -354,12 +355,10 @@ class ToolWheel():
         
         # Override: box is active when mouse is pointing at it
         active_box = None
-        mouse_in_box = False
         for box in self.boxes:
             if (box.x <= self.mouse_x <= box.x + box.w and
                 box.y - box.h <= self.mouse_y <= box.y):
                 self.active_mode = box.mode
-                mouse_in_box = True
             if self.active_mode == box.mode:
                 active_box = box
         
@@ -386,18 +385,40 @@ class ToolWheel():
                     active_tool = button.tool_index
                 
                 # Draw tool icon background
-                gpu.matrix.push()
-                gpu.matrix.translate((button.x + button.BUTTON_IMG_PADDING, button.y - button.BUTTON_IMG_PADDING))
-                color = self.highlight_color if is_active else (self.tool_bg_color_sel if box_is_selected else self.tool_bg_color)
-                self.shader_icon_bg.uniform_float('color', color)
-                self.batch_icon_bg.draw(self.shader_icon_bg)
-                gpu.matrix.pop()
+                if is_active:
+                    gpu.matrix.push()
+                    gpu.matrix.translate((button.x + button.BUTTON_IMG_PADDING, button.y - button.BUTTON_IMG_PADDING))
+                    #color = self.highlight_color if is_active else (self.tool_bg_color_sel if box_is_selected else self.tool_bg_color)
+                    color = self.highlight_color
+                    self.shader_icon_bg.uniform_float('color', color)
+                    self.batch_icon_bg.draw(self.shader_icon_bg)
+                    gpu.matrix.pop()
                 
                 # Draw tool icon
                 texture = td.textures[tool['icon']]
                 x = button.x + ipad
                 y = button.y - button.h - ipad
                 draw_texture_2d(texture, (x, y), button.w, button.h)
+                
+                # Draw separator lines
+                if button.separator_right or button.separator_top:
+                    coords = []
+                    if button.separator_right:
+                        x0 = button.x + button.w + ModeBox.BOX_PADDING + box.sep_offset
+                        y0 = button.y - ModeBox.BOX_PADDING
+                        y1 = button.y - button.h
+                        coords.append((x0, y0))
+                        coords.append((x0, y1))
+                    if button.separator_top:
+                        x0 = box.x + ModeBox.BOX_PADDING + box.sep_offset
+                        x1 = box.x + box.w - ModeBox.BOX_PADDING + box.sep_offset
+                        y0 = button.y + box.sep_offset
+                        coords.append((x0, y0))
+                        coords.append( (x1, y0))
+                    batch = batch_for_shader(self.shader_icon_bg, 'LINES', {'pos': coords})
+                    color = self.sep_color_sel if box_is_selected else self.sep_color
+                    self.shader_icon_bg.uniform_float('color', color)
+                    batch.draw(self.shader_icon_bg)
         
         self.active_tool = active_tool
         
@@ -433,10 +454,10 @@ class ToolWheel():
             
             draw_texture_2d(td.textures['active_dot'], (dx, dy), 10, 10)
         
-        # Draw active tool name as hint
+        # Draw active mode or tool name as hint
         # Note: this must be done last, because blf messes with the alpha state
         blf.size(0, 11, 72)
-        if self.show_hints and mouse_in_box:
+        if self.show_hints and active_box is not None:
             # Draw rectangle in center of wheel
             dx = self.center_x - self.HINT_WIDTH * 0.5
             dy = self.center_y - self.HINT_HEIGHT * 0.5
@@ -459,7 +480,7 @@ class ToolWheel():
             text = td.tools_per_mode[box.mode]['name']
             tw, _ = blf.dimensions(0, text)
             dx = int((box.w - tw) * 0.5) - ModeBox.BOX_PADDING
-            alpha = 0.8 if box.mode == self.active_mode else 0.25
+            alpha = 0.9 if box.mode == self.active_mode else 0.25
             blf.color(0, self.text_color[0], self.text_color[1], self.text_color[2], alpha)
             blf.position(0, box.title_x + dx, box.title_y, 0)
             blf.draw(0, text)
