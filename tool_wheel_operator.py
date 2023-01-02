@@ -1,8 +1,8 @@
 import bpy
 from bpy.types import Operator
 
+from . import tool_wheel_draw
 from .tool_data import tool_data as td
-from .tool_wheel_draw import tool_wheel
 
 
 class GPENCIL_OT_tool_wheel(Operator):
@@ -13,6 +13,7 @@ class GPENCIL_OT_tool_wheel(Operator):
 
     _draw_handle = None
     _brush_sizes = [0, 0, 0, 0]
+    tool_wheel = tool_wheel_draw.ToolWheel()
     
     
     @classmethod
@@ -71,8 +72,8 @@ class GPENCIL_OT_tool_wheel(Operator):
                 bpy.ops.wm.tool_set_by_id(name=tool)
         
         return {'FINISHED'}
-        
-        
+    
+    
     # Check modal events    
     def modal(self, context, event):
         # Abort?
@@ -86,12 +87,12 @@ class GPENCIL_OT_tool_wheel(Operator):
         
         # Handle left mouse click
         if event.type == 'LEFTMOUSE':
-            return self.switch_mode_and_tool(context, tool_wheel.active_mode, tool_wheel.active_tool)
+            return self.switch_mode_and_tool(context, self.tool_wheel.active_mode, self.tool_wheel.active_tool)
         
         # Redraw area on mouse move
         if event.type == 'MOUSEMOVE':
-            tool_wheel.mouse_x = event.mouse_region_x
-            tool_wheel.mouse_y = event.mouse_region_y
+            self.tool_wheel.mouse_x = event.mouse_region_x
+            self.tool_wheel.mouse_y = event.mouse_region_y
             context.area.tag_redraw()
         
         return {'RUNNING_MODAL'}
@@ -108,7 +109,7 @@ class GPENCIL_OT_tool_wheel(Operator):
             return {'CANCELLED'}
         
         # Prepare draw
-        if not tool_wheel.prepare(event, area, context):
+        if not self.tool_wheel.prepare(event, area, context):
             return {'CANCELLED'}
         
         # Set cursor to default
@@ -126,7 +127,7 @@ class GPENCIL_OT_tool_wheel(Operator):
         
         # Add draw handler to 3D viewport
         args = (context,)
-        self._draw_handle = area.spaces[0].draw_handler_add(tool_wheel.draw, args, 'WINDOW', 'POST_PIXEL')
+        self._draw_handle = area.spaces[0].draw_handler_add(self.tool_wheel.draw, args, 'WINDOW', 'POST_PIXEL')
         area.tag_redraw()
         
         # Run modal operator
@@ -152,4 +153,4 @@ class GPENCIL_OT_tool_wheel(Operator):
         context.area.tag_redraw()
         
         # Clean up draw
-        tool_wheel.end()
+        self.tool_wheel.end()

@@ -388,7 +388,6 @@ class ToolWheel():
                 if is_active:
                     gpu.matrix.push()
                     gpu.matrix.translate((button.x + button.BUTTON_IMG_PADDING, button.y - button.BUTTON_IMG_PADDING))
-                    #color = self.highlight_color if is_active else (self.tool_bg_color_sel if box_is_selected else self.tool_bg_color)
                     color = self.highlight_color
                     self.shader_icon_bg.uniform_float('color', color)
                     self.batch_icon_bg.draw(self.shader_icon_bg)
@@ -496,6 +495,3 @@ class ToolWheel():
         
         # Reset gpu state
         gpu.state.blend_set('NONE')
-
-
-tool_wheel = ToolWheel()

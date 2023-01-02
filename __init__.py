@@ -13,11 +13,11 @@ bl_info = {
 if 'bpy' in locals():
     import importlib
     importlib.reload(preferences)
-    importlib.reload(operator)
+    importlib.reload(tool_wheel_operator)
     importlib.reload(tool_data)
 else:
     from . import preferences
-    from . import operator
+    from . import tool_wheel_operator
     from . import tool_data
 
 import bpy
@@ -49,7 +49,7 @@ def register():
     bpy.utils.register_class(preferences.GPTOOLWHEEL_OT_MoveItem)
     bpy.utils.register_class(preferences.GPTOOLWHEEL_OT_AssignHotkey)
     bpy.utils.register_class(preferences.GPTOOLWHEEL_OT_SavePrefDefinition)
-    bpy.utils.register_class(operator.GPENCIL_OT_tool_wheel)
+    bpy.utils.register_class(tool_wheel_operator.GPENCIL_OT_tool_wheel)
 
     # Delayed inits
     bpy.app.timers.register(addon_init, first_interval=0.2)
@@ -63,7 +63,7 @@ def unregister():
     bpy.utils.unregister_class(preferences.GPTOOLWHEEL_OT_MoveItem)
     bpy.utils.unregister_class(preferences.GPTOOLWHEEL_OT_AssignHotkey)
     bpy.utils.unregister_class(preferences.GPTOOLWHEEL_OT_SavePrefDefinition)
-    bpy.utils.unregister_class(operator.GPENCIL_OT_tool_wheel)
+    bpy.utils.unregister_class(tool_wheel_operator.GPENCIL_OT_tool_wheel)
 
     # Remove hotkey
     preferences.remove_hotkey_of_tool_wheel()
