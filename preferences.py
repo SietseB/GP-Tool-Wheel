@@ -369,14 +369,13 @@ def set_default_preferences():
             pref.mode = td.modes[i]
 
     # When there is no user defined keyboard shortcut,
-    # assign Ctrl Tab / Tab
+    # assign F8
     if not addon_prefs.kmi_is_user_set:
-        addon_prefs.kmi_key = 'TAB'
-        addon_prefs.kmi_alt = False
+        addon_prefs.kmi_key = 'F8'
+        addon_prefs.kmi_ctrl = False
         addon_prefs.kmi_shift = False
+        addon_prefs.kmi_alt = False
         addon_prefs.kmi_oskey = False
-        # Use Tab for pie menu or Ctrl Tab?
-        addon_prefs.kmi_ctrl = not bpy.context.window_manager.keyconfigs.active.preferences.use_v3d_tab_menu
 
 
 # Get the tool preferences

@@ -455,7 +455,7 @@ class ToolWheel():
         
         # Draw active mode or tool name as hint
         # Note: this must be done last, because blf messes with the alpha state
-        blf.size(0, 11, 72)
+        blf.size(0, 11)
         if self.show_hints and active_box is not None:
             # Draw rectangle in center of wheel
             dx = self.center_x - self.HINT_WIDTH * 0.5

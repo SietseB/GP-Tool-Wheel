@@ -6,8 +6,8 @@
 Using Grease Pencil and switching a lot between modes and tools? Then GP Tool Wheel can speed up your workflow: it combines mode and tool selection in one delicious wheel.
 
 
-## How to use the wheel
-By default you can invoke the tool wheel with the pie menu shortcut: `Tab` or `Ctrl`-`Tab`. You can change this shortcut easily, by [customizing your wheel](#customize-your-wheel).
+## How to use the wheel – press <kbd>F8</kbd>
+By default you can invoke the tool wheel with the shortcut <kbd>F8</kbd>. You can change this shortcut easily by [customizing your wheel](#customize-your-wheel).
 
 The wheel only appears when there is an active Grease Pencil object.
 
@@ -21,9 +21,8 @@ Selecting a tool needs no explanation: click on an icon and you are good to go.
 ## Customize your wheel
 For the add-on preferences, go to `Edit` > `Preferences...` > `Add-ons` and look for `3D View: GP Tool Wheel`. Click on the arrow on the left.
 
-Here you can compose your ideal, tailor made wheel. Perhaps you want to change it in a kind of 'Quick favorites' menu, with only the modes and tools you often use.
+Here you can compose your ideal, tailor made wheel. Perhaps you want to change it in a kind of 'Quick favorites' menu, with only the modes and tools you often use. Or assign <kbd>Tab</kbd> as shortcut, replacing the default pie menu.
 
-It's recommended to change the keyboard shortcut when you don't include all the modes in your wheel.
 
 > **Circle of GP life:** defining the order of modes
 >
