@@ -54,5 +54,9 @@ Installation of the add-on is done in the usual Blender way:
 
 
 ## Changelog
+- v1.0.2 – 2023-02-07
+  - Default keyboard shortcut changed to F8
+- v1.0.1 – 2023-01-02
+  - Code cleanup
 - v1.0.0 – 2022-11-16
   - Initial release
