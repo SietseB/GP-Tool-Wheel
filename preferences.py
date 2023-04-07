@@ -383,12 +383,28 @@ def get_tool_preferences():
     # Get tool preferences
     prefs = bpy.context.preferences.addons[__package__].preferences
 
+    # Reset list
+    for mode in td.modes:
+        for tool in td.tools_per_mode[mode]['tools']:
+            tool.pop('pref', None)
+    
     # Update tool list
     for pref in prefs.tools:
         tool = td.tools_per_mode[pref.mode]['tools'][pref.tool_index]
         tool['enabled'] = pref.enabled
         tool['pref'] = pref
 
+    # Check for new tools, not yet set in list
+    for mode in td.modes:
+        for i, tool in enumerate(td.tools_per_mode[mode]['tools']):
+            if 'pref' not in tool:
+                pref = prefs.tools.add()
+                pref.mode = mode
+                pref.tool_index = i
+                pref.enabled = tool['default']
+                tool['enabled'] = pref.enabled
+                tool['pref'] = pref
+    
     # Get mode order
     td.mode_order = []
     for pref in prefs.mode_order:

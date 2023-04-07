@@ -49,6 +49,9 @@ class ToolData():
             'active_tools': [],
             'tools': [
                 {'name': 'Weight', 'tool': 'builtin_brush.Weight', 'icon': 'weight_paint_weight', 'default': True},
+                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': False},
+                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': False},
+                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': False},
             ]
         }
         s['draw'] = {

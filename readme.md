@@ -54,6 +54,9 @@ Installation of the add-on is done in the usual Blender way:
 
 
 ## Changelog
+- v1.0.3 – 2023-04-07
+  - Support for new weight paint tools
+  - Fix: brush size error when opening tool wheel in older GP files
 - v1.0.2 – 2023-02-07
   - Default keyboard shortcut changed to F8
 - v1.0.1 – 2023-01-02
