@@ -122,8 +122,9 @@ class GPENCIL_OT_tool_wheel(Operator):
                                    ts.gpencil_sculpt_paint.brush,
                                    ts.gpencil_vertex_paint.brush,
                                    ts.gpencil_weight_paint.brush]):
-            self._brush_sizes[i] = brush.size
-            brush.size = 0
+            if brush is not None:
+                self._brush_sizes[i] = brush.size
+                brush.size = 0
         
         # Add draw handler to 3D viewport
         args = (context,)
@@ -146,7 +147,8 @@ class GPENCIL_OT_tool_wheel(Operator):
                                    ts.gpencil_sculpt_paint.brush,
                                    ts.gpencil_vertex_paint.brush,
                                    ts.gpencil_weight_paint.brush]):
-            brush.size = self._brush_sizes[i]
+            if brush is not None:
+                brush.size = self._brush_sizes[i]
         
         # Remove draw handler
         context.area.spaces[0].draw_handler_remove(self._draw_handle, 'WINDOW')
