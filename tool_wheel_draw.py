@@ -16,6 +16,10 @@ from .preferences import get_show_hints
 from .tool_data import tool_data as td
 
 
+# Constants
+COLOR_SHADER = 'UNIFORM_COLOR' if bpy.app.version >= (3, 4, 0) else '2D_UNIFORM_COLOR'
+
+
 class ToolButton():
     BUTTON_IMG_SIZE = 32
     BUTTON_IMG_PADDING = 2
@@ -259,7 +263,7 @@ class ToolWheel():
         self.highlight_color = self.get_adjusted_color(base_color, 0.05)
         
         # Init shaders
-        self.shader_icon_bg = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+        self.shader_icon_bg = gpu.shader.from_builtin(COLOR_SHADER)
         self.shader_icon_bg.bind()
 
         # Create icon background batch
