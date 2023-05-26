@@ -52,6 +52,7 @@ class ToolData():
                 {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': False},
                 {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': False},
                 {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': False},
+                {'name': 'Gradient', 'tool': 'builtin.gradient', 'icon': 'weight_paint_gradient', 'default': False},
             ]
         }
         s['draw'] = {

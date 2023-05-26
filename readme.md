@@ -54,8 +54,11 @@ Installation of the add-on is done in the usual Blender way:
 
 
 ## Changelog
+- v1.0.4 – 2023-05-26
+  - Support for Blender 4.0
+  - Support for gradient weight paint tool (yet to come in Blender)
 - v1.0.3 – 2023-04-07
-  - Support for new weight paint tools
+  - Support for new weight paint tools (Blur, Average, Smear)
   - Fix: brush size error when opening tool wheel in older GP files
 - v1.0.2 – 2023-02-07
   - Default keyboard shortcut changed to F8
