@@ -19,7 +19,13 @@ Selecting a tool needs no explanation: click on an icon and you are good to go.
 
 
 ## Customize your wheel
-For the add-on preferences, go to `Edit` > `Preferences...` > `Add-ons` and look for `3D View: GP Tool Wheel`. Click on the arrow on the left.
+You can customize your wheel in the add-on preferences.
+
+Up to Blender 4.1, go to `Edit` > `Preferences...` > `Add-ons` and look for `3D View: GP Tool Wheel`.
+
+For Blender 4.2 and higher, go to `Edit` > `Preferences...` > `Extensions` and look for `GP Tool Wheel`. 
+
+Click on the arrow on the left.
 
 Here you can compose your ideal, tailor made wheel. Perhaps you want to change it in a kind of 'Quick favorites' menu, with only the modes and tools you often use. Or assign <kbd>Tab</kbd> as shortcut, replacing the default pie menu.
 
@@ -33,16 +39,15 @@ Here you can compose your ideal, tailor made wheel. Perhaps you want to change i
 > ![GP Tool Wheel Preferences select you tools](docs/images/gp_tool_wheel_preferences_2.png)
 
 > **Transfer preferences to other computer or Blender installation:**
-> you can save the preferences to a `wheel_definition.json` file and distribute that file to other computers or Blender installations.
-> The file will be saved in the add-on installation directory. Copy this file to the add-on directory of other computers and the preferences will be loaded automatically at startup.
+> you can save the preferences to a `.json` file and distribute that file to other computers or Blender installations.
 > 
-> ![Save preferences to definition file](docs/images/gp_tool_wheel_preferences_3.png)
+> ![Save and load preferences to/from definition file](docs/images/gp_tool_wheel_preferences_3.png)
 
 
 ## Installation
 GP Tool Wheel is suited for Blender 3.0 and higher.
 
-Installation of the add-on is done in the usual Blender way:
+Up to Blender 4.1, installation of the add-on is done in the usual Blender way:
 - Download [the latest release](https://github.com/SietseB/GP-Tool-Wheel/releases). (Make sure it is a zip file, not automatically unzipped.)
 - In Blender, go to `Edit` > `Preferences...` > `Add-ons`. Click on `Install...` and select the zip file.
 - When the stars are in your favour, the add-on appears. Activate it.
@@ -54,6 +59,10 @@ Installation of the add-on is done in the usual Blender way:
 
 
 ## Changelog
+- v1.0.5 - 2024-05-23
+  - Support for Grease Pencil v3
+  - Save and load preferences to a custom file path
+  - Made ready as extension for extensions.blender.org
 - v1.0.4 – 2023-05-26
   - Support for Blender 4.0
   - Support for gradient weight paint tool (yet to come in Blender)

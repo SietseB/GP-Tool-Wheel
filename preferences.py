@@ -4,10 +4,10 @@ GP Tool Wheel
 Addon preferences
 '''
 
-from os import path
 import json
 
 import bpy
+from bpy_extras.io_utils import ExportHelper, ImportHelper
 from bpy.props import BoolProperty, CollectionProperty, IntProperty, StringProperty
 from bpy.types import AddonPreferences, Operator, PropertyGroup, UIList
 
@@ -19,27 +19,25 @@ class GPTOOLWHEEL_OT_AssignHotkey(Operator):
     '''Click to set a keyboard shortcut'''
     bl_idname = 'gp_tool_wheel.assign_hotkey'
     bl_label = 'Click to set a keyboard shortcut'
-    
-    
+
     @classmethod
     def poll(cls, _):
         return True
-    
-    
+
     # Set new key mapping
     def set_new_key(self, event):
         # Remove existing key mapping
         km, kmi = td.keymappings[0]
         km.keymap_items.remove(kmi)
-        
+
         # Create new mapping
-        kmi = km.keymap_items.new('gpencil.tool_wheel', type=event.type, value='PRESS', 
+        kmi = km.keymap_items.new('gpencil.tool_wheel', type=event.type, value='PRESS',
                                   alt=event.alt, ctrl=event.ctrl, shift=event.shift, oskey=event.oskey)
         td.keymappings[0] = (km, kmi)
-        
+
         # Set text in operator button
         td.key_button_text = kmi.to_string()
-        
+
         # Store new key as preference
         prefs = bpy.context.preferences.addons[__package__].preferences
         prefs.kmi_is_user_set = True
@@ -48,45 +46,42 @@ class GPTOOLWHEEL_OT_AssignHotkey(Operator):
         prefs.kmi_ctrl = event.ctrl
         prefs.kmi_shift = event.shift
         prefs.kmi_oskey = event.oskey
-    
-    
+        bpy.context.preferences.is_dirty = True
+
     # Wait for key press
     def modal(self, context, event):
         # Abort when ESC is pressed
         if event.type == 'ESC':
             self.ended(context)
             return {'CANCELLED'}
-        
+
         # Only inspect key presses
         if event.value != 'PRESS':
             return {'RUNNING_MODAL'}
-        
+
         # When key is not excluded, we have a hit
         if event.type not in {
             'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE',
             'TRACKPADPAN', 'TRACKPADZOOM',
             'MOUSEROTATE', 'MOUSESMARTZOOM', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE', 'WHEELINMOUSE', 'WHEELOUTMOUSE',
             'LEFT_CTRL', 'LEFT_ALT', 'LEFT_SHIFT', 'RIGHT_ALT', 'RIGHT_CTRL', 'RIGHT_SHIFT', 'OSKEY',
-            'APP', 'WINDOW_DEACTIVATE',
-            'TIMER', 'TIMER0', 'TIMER1', 'TIMER2', 'TIMER_JOBS',
-            'TIMER_AUTOSAVE', 'TIMER_REPORT', 'TIMERREGION'}:
+            'APP', 'WINDOW_DEACTIVATE', 'TIMER', 'TIMER0', 'TIMER1', 'TIMER2', 'TIMER_JOBS',
+                'TIMER_AUTOSAVE', 'TIMER_REPORT', 'TIMERREGION'}:
             self.set_new_key(event)
             self.ended(context)
             return {'FINISHED'}
-        
-        return {'RUNNING_MODAL'}
 
+        return {'RUNNING_MODAL'}
 
     # Start modal operator
     def execute(self, context):
         # Set button text
         td.key_button_text = 'Press a key...'
         td.key_button_depress = True
-        
+
         # Run modal operator
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
-
 
     # Operator ended
     def ended(self, context):
@@ -94,7 +89,7 @@ class GPTOOLWHEEL_OT_AssignHotkey(Operator):
         kmi = td.keymappings[0][1]
         td.key_button_text = kmi.to_string()
         td.key_button_depress = False
-        
+
         # Redraw preferences area
         wm = context.window_manager
         windows_count = len(wm.windows)
@@ -117,15 +112,13 @@ class GPTOOLWHEEL_OT_MoveItem(Operator):
     '''Move an item upwards/downwards'''
     bl_idname = 'gp_tool_wheel.move_item'
     bl_label = 'Move an item in the list'
-    
+
     direction: StringProperty()
-    
-    
+
     @classmethod
     def poll(cls, _):
         return True
-    
-    
+
     # Move selected item index
     def move_index(self):
         prefs = bpy.context.preferences.addons[__package__].preferences
@@ -133,8 +126,7 @@ class GPTOOLWHEEL_OT_MoveItem(Operator):
         list_len = len(prefs.mode_order) - 1
         new_index = index + (-1 if self.direction == 'up' else 1)
         prefs.mode_index = max(0, min(list_len, new_index))
-    
-    
+
     # Move item upwards/downwards
     def execute(self, _):
         prefs = bpy.context.preferences.addons[__package__].preferences
@@ -145,20 +137,109 @@ class GPTOOLWHEEL_OT_MoveItem(Operator):
 
 
 # Operator for saving preference definition
-class GPTOOLWHEEL_OT_SavePrefDefinition(Operator):
+class GPTOOLWHEEL_OT_SavePrefDefinition(Operator, ExportHelper):
     '''Save preference definition to file'''
     bl_idname = 'gp_tool_wheel.save_pref_definition'
-    bl_label = 'Save Preferences to Definition File'
-    
-    
+    bl_label = 'Save Preferences'
+
+    filename_ext = ".json"
+    filter_glob: StringProperty(
+        default="*.json",
+        options={'HIDDEN'},
+        maxlen=255,
+    )
+
     @classmethod
     def poll(cls, _):
         return True
-    
-    
-    def execute(self, _):
-        file = save_preference_definition()
-        self.report({'INFO'}, f'Preference Definition saved to {file}')
+
+    def execute(self, context):
+        # Get prefs
+        prefs = context.preferences.addons[__package__].preferences
+        tools = []
+        for tool in prefs.tools:
+            tools.append((tool.mode, tool.tool_index, tool.enabled))
+        mode_order = []
+        for mode in prefs.mode_order:
+            mode_order.append((mode.name, mode.order, mode.mode))
+
+        # Compose data object for json
+        data = {
+            'tools': tools,
+            'mode_order': mode_order,
+            'show_hints': prefs.show_hints,
+            'kmi_wheel': (True,
+                          prefs.kmi_key,
+                          prefs.kmi_alt,
+                          prefs.kmi_ctrl,
+                          prefs.kmi_shift,
+                          prefs.kmi_oskey),
+        }
+
+        # Write json
+        with open(self.filepath, 'w') as outfile:
+            json.dump(data, outfile, indent=4)
+
+        self.report({'INFO'}, f'Preference Definition saved to {self.filepath}')
+
+        return {'FINISHED'}
+
+
+# Operator for loading preference definition
+class GPTOOLWHEEL_OT_LoadPrefDefinition(Operator, ImportHelper):
+    '''Load preference definition from file'''
+    bl_idname = 'gp_tool_wheel.load_pref_definition'
+    bl_label = 'Load Preferences'
+
+    filename_ext = ".json"
+    filter_glob: StringProperty(
+        default="*.json",
+        options={'HIDDEN'},
+        maxlen=255,
+    )
+
+    @classmethod
+    def poll(cls, _):
+        return True
+
+    def execute(self, context):
+        # Get prefs
+        prefs = context.preferences.addons[__package__].preferences
+
+        # Read json
+        with open(self.filepath, 'r') as infile:
+            data = json.load(infile)
+
+        # Convert data to preference settings
+        prefs.tools.clear()
+        for tool in data['tools']:
+            pref = prefs.tools.add()
+            pref.mode, pref.tool_index, pref.enabled = tool
+        prefs.mode_order.clear()
+        for mode in data['mode_order']:
+            pref = prefs.mode_order.add()
+            pref.name, pref.order, pref.mode = mode
+        prefs.show_hints = data['show_hints']
+        (prefs.kmi_is_user_set,
+         prefs.kmi_key, prefs.kmi_alt,
+         prefs.kmi_ctrl, prefs.kmi_shift, prefs.kmi_oskey) = data['kmi_wheel']
+
+        # Remove existing key mapping
+        km, kmi = td.keymappings[0]
+        km.keymap_items.remove(kmi)
+
+        # Create new mapping
+        kmi = km.keymap_items.new('gpencil.tool_wheel', type=prefs.kmi_key, value='PRESS',
+                                  alt=prefs.kmi_alt, ctrl=prefs.kmi_ctrl, shift=prefs.kmi_shift, oskey=prefs.kmi_oskey)
+        td.keymappings[0] = (km, kmi)
+
+        # Set text in operator button
+        td.key_button_text = kmi.to_string()
+
+        context.preferences.is_dirty = True
+
+        self.report({'INFO'}, f'Preference Definition loaded from {self.filepath}')
+
         return {'FINISHED'}
 
 
@@ -175,7 +256,7 @@ class GPToolWheel_PG_tool(PropertyGroup):
     # (it doesn't autodetect that for properties in a collection)
     def on_pref_change(self, context):
         context.preferences.is_dirty = True
-    
+
     mode: StringProperty()
     tool_index: IntProperty()
     enabled: BoolProperty(update=on_pref_change)
@@ -187,42 +268,41 @@ class GPToolWheelPreferences(AddonPreferences):
 
     prefs_version: IntProperty(default=1)
     tools: CollectionProperty(name='Wheel Tools', type=GPToolWheel_PG_tool)
-    show_hints: BoolProperty(name='Show Hints', default=True, 
+    show_hints: BoolProperty(name='Show Hints', default=True,
                              description='Show tool name when hovering over the tools in the wheel')
     mode_order: CollectionProperty(name='Mode Order', type=GPToolWheel_PG_mode_order)
     mode_index: IntProperty(name='Mode', default=0, description='Mode')
-    
+
     kmi_is_user_set: BoolProperty(default=False)
     kmi_key: StringProperty()
     kmi_alt: BoolProperty()
     kmi_ctrl: BoolProperty()
     kmi_shift: BoolProperty()
     kmi_oskey: BoolProperty()
-    
-    
+
     # Draw preferences
     def draw(self, _):
         layout = self.layout
         td.get_active_modes_and_tools()
-        
+
         # Keyboard shortcut
         box = layout.box()
         row = box.row()
         row.label(text='Keyboard shortcut for GP Tool Wheel:')
         row.operator('gp_tool_wheel.assign_hotkey', text=td.key_button_text, depress=td.key_button_depress)
-        
+
         # Hints
         box = layout.box()
         col = box.column()
         col.prop(self, 'show_hints')
-        
+
         # Mode order
         box = layout.box()
         row = box.column()
         row.label(text='Mode order in the wheel:')
         row = box.row().split(factor=0.35)
         row.template_list('GPTOOLWHEEL_UL_ModeList', '', self, 'mode_order', self, 'mode_index', rows=7)
-        
+
         # Order buttons (operators)
         row = row.column()
         sub = row.split(factor=0.07)
@@ -231,7 +311,7 @@ class GPToolWheelPreferences(AddonPreferences):
         sub = row.split(factor=0.07)
         op = sub.operator('gp_tool_wheel.move_item', icon='TRIA_DOWN', text='')
         op.direction = 'down'
-        
+
         # Visual sketch of mode order in the wheel
         row.separator(factor=4)
         box = row.column().split(factor=0.6).box()
@@ -245,7 +325,7 @@ class GPToolWheelPreferences(AddonPreferences):
                 row.label(text=label)
                 if i < 2:
                     row.separator()
-        
+
         # Tools per mode
         box = layout.box()
         col = box.column(align=True)
@@ -259,85 +339,16 @@ class GPToolWheelPreferences(AddonPreferences):
             col.label(text=td.tools_per_mode[mode]['name'])
             for tool in td.tools_per_mode[mode]['tools']:
                 col.prop(tool['pref'], 'enabled', text=tool['name'])
-        
+
         # Save preference definition
-        def_file = path.dirname(path.abspath(__file__)) + path.sep +  'wheel_definition.json'
         layout.separator(factor=0)
         box = layout.box()
         col = box.column(align=True)
-        col.operator('gp_tool_wheel.save_pref_definition')
+        row = col.row()
+        row.operator('gp_tool_wheel.save_pref_definition')
+        row.operator('gp_tool_wheel.load_pref_definition')
         col.separator(factor=1.5)
-        col.label(text='You can save the GP Tool Wheel preferences for distribution to other Blender installations.')
-        col.separator()
-        col.label(text='The preferences will be saved to the following file:')
-        col.label(text=def_file)
-
-
-# Save preference definition to json file
-def save_preference_definition():
-    # Set file name
-    def_file = path.dirname(path.abspath(__file__)) + path.sep +  'wheel_definition.json'
-
-    # Get prefs
-    prefs = bpy.context.preferences.addons[__package__].preferences
-    tools = []
-    for tool in prefs.tools:
-        tools.append((tool.mode, tool.tool_index, tool.enabled))
-    mode_order = []
-    for mode in prefs.mode_order:
-        mode_order.append((mode.name, mode.order, mode.mode))
-    
-    # Compose data object for json
-    data = {
-        'tools': tools,
-        'mode_order': mode_order,
-        'show_hints': prefs.show_hints,
-        'kmi_wheel': (prefs.kmi_is_user_set,
-                      prefs.kmi_key,
-                      prefs.kmi_alt,
-                      prefs.kmi_ctrl,
-                      prefs.kmi_shift,
-                      prefs.kmi_oskey),
-    }
-    
-    # Write json
-    with open(def_file, 'w') as outfile:
-        json.dump(data, outfile, indent=4)
-
-    return def_file
-
-
-# Load preference definition from json file
-def load_preference_definition():
-    # Get prefs
-    prefs = bpy.context.preferences.addons[__package__].preferences
-    
-    # Get file name
-    def_file = path.dirname(path.abspath(__file__)) + path.sep +  'wheel_definition.json'
-    
-    # Definition file exists?
-    if not path.exists(def_file):
-        return False
-    
-    # Read json
-    with open(def_file, 'r') as infile:
-        data = json.load(infile)
-    
-    # Convert data to preference settings
-    prefs.tools.clear()
-    for tool in data['tools']:
-        pref = prefs.tools.add()
-        pref.mode, pref.tool_index, pref.enabled = tool
-    prefs.mode_order.clear()
-    for mode in data['mode_order']:
-        pref = prefs.mode_order.add()
-        pref.name, pref.order, pref.mode = mode
-    prefs.show_hints = data['show_hints']
-    (prefs.kmi_is_user_set,
-     prefs.kmi_key, prefs.kmi_alt,
-     prefs.kmi_ctrl, prefs.kmi_shift, prefs.kmi_oskey) = data['kmi_wheel']
-    
-    return True
+        col.label(text='You can save and load the GP Tool Wheel preferences for distribution to other Blender installations.')
 
 
 # When not set already, set default tool preferences
@@ -345,12 +356,8 @@ def set_default_preferences():
     # Get tool preferences
     addon_prefs = bpy.context.preferences.addons[__package__].preferences
     tool_prefs = addon_prefs.tools
-    
-    # When there are no tool preferences, try to load them from definition file
-    if len(tool_prefs) == 0:
-        load_preference_definition()
-    
-    # When there are still no tool preferences, add them
+
+    # When there are no tool preferences, add them
     if len(tool_prefs) == 0:
         for mode in td.modes:
             for i, tool in enumerate(td.tools_per_mode[mode]['tools']):
@@ -387,7 +394,7 @@ def get_tool_preferences():
     for mode in td.modes:
         for tool in td.tools_per_mode[mode]['tools']:
             tool.pop('pref', None)
-    
+
     # Update tool list
     for pref in prefs.tools:
         tool = td.tools_per_mode[pref.mode]['tools'][pref.tool_index]
@@ -404,7 +411,7 @@ def get_tool_preferences():
                 pref.enabled = tool['default']
                 tool['enabled'] = pref.enabled
                 tool['pref'] = pref
-    
+
     # Get mode order
     td.mode_order = []
     for pref in prefs.mode_order:
@@ -420,16 +427,16 @@ def get_show_hints():
 def assign_hotkey_to_tool_wheel():
     # Get preferences
     prefs = bpy.context.preferences.addons[__package__].preferences
-    
+
     # Get key config
     kc = bpy.context.window_manager.keyconfigs.addon
     if kc:
         # Set keymap item
         km = kc.keymaps.new(name='Object Non-modal', space_type='EMPTY', region_type='WINDOW')
-        kmi = km.keymap_items.new('gpencil.tool_wheel', type=prefs.kmi_key, value='PRESS', 
+        kmi = km.keymap_items.new('gpencil.tool_wheel', type=prefs.kmi_key, value='PRESS',
                                   alt=prefs.kmi_alt, ctrl=prefs.kmi_ctrl, shift=prefs.kmi_shift, oskey=prefs.kmi_oskey)
         td.keymappings.append((km, kmi))
-        
+
         # Set text in preferences operator
         GPTOOLWHEEL_OT_AssignHotkey.bl_label = kmi.to_string()
         td.key_button_text = kmi.to_string()

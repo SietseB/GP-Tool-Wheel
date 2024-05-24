@@ -1,7 +1,7 @@
 bl_info = {
     "name": "GP Tool Wheel",
     "author": "Sietse Brouwer",
-    "version": (1, 0, 4),
+    "version": (1, 0, 5),
     "blender": (3, 0, 0),
     "description": "Extended pie menu for selecting Grease Pencil tools quickly.",
     "doc_url": "https://github.com/SietseB/GP-Tool-Wheel",
@@ -29,13 +29,13 @@ def addon_init():
     if bpy.context.window_manager.keyconfigs.active is None:
         # Keep interval timer alive
         return 0.2
-    
+
     # Set default preferences (when needed)
     preferences.set_default_preferences()
 
     # Assign hotkey to tool wheel operator
     preferences.assign_hotkey_to_tool_wheel()
-    
+
     # Load tool icons
     tool_data.tool_data.get_tool_icon_textures()
 
@@ -49,6 +49,7 @@ def register():
     bpy.utils.register_class(preferences.GPTOOLWHEEL_OT_MoveItem)
     bpy.utils.register_class(preferences.GPTOOLWHEEL_OT_AssignHotkey)
     bpy.utils.register_class(preferences.GPTOOLWHEEL_OT_SavePrefDefinition)
+    bpy.utils.register_class(preferences.GPTOOLWHEEL_OT_LoadPrefDefinition)
     bpy.utils.register_class(tool_wheel_operator.GPENCIL_OT_tool_wheel)
 
     # Delayed inits
@@ -63,6 +64,7 @@ def unregister():
     bpy.utils.unregister_class(preferences.GPTOOLWHEEL_OT_MoveItem)
     bpy.utils.unregister_class(preferences.GPTOOLWHEEL_OT_AssignHotkey)
     bpy.utils.unregister_class(preferences.GPTOOLWHEEL_OT_SavePrefDefinition)
+    bpy.utils.unregister_class(preferences.GPTOOLWHEEL_OT_LoadPrefDefinition)
     bpy.utils.unregister_class(tool_wheel_operator.GPENCIL_OT_tool_wheel)
 
     # Remove hotkey

@@ -16,7 +16,7 @@ from . import preferences
 
 class ToolData():
     ICON_PATH = path.sep + 'icons' + path.sep
-    
+
     def __init__(self):
         self.keymappings = []
         self.key_button_text = ''
@@ -46,12 +46,13 @@ class ToolData():
             'name': 'Weight Paint',
             'name_short': 'Weight',
             'mode': 'WEIGHT_GPENCIL',
+            'modev3': 'WEIGHT_GREASE_PENCIL',
             'active_tools': [],
             'tools': [
                 {'name': 'Weight', 'tool': 'builtin_brush.Weight', 'icon': 'weight_paint_weight', 'default': True},
-                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': False},
-                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': False},
-                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': False},
+                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': True},
+                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': True},
+                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': True},
                 {'name': 'Gradient', 'tool': 'builtin.gradient', 'icon': 'weight_paint_gradient', 'default': False},
             ]
         }
@@ -59,6 +60,7 @@ class ToolData():
             'name': 'Draw Mode',
             'name_short': 'Draw',
             'mode': 'PAINT_GPENCIL',
+            'modev3': 'PAINT_GREASE_PENCIL',
             'active_tools': [],
             'tools': [
                 {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'draw_draw', 'default': True},
@@ -80,6 +82,7 @@ class ToolData():
             'name': 'Vertex Paint',
             'name_short': 'Vertex',
             'mode': 'VERTEX_GPENCIL',
+            'modev3': 'VERTEX_GREASE_PENCIL',
             'active_tools': [],
             'tools': [
                 {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'vertex_paint_draw', 'default': True},
@@ -93,6 +96,7 @@ class ToolData():
             'name': 'Edit Mode',
             'name_short': 'Edit',
             'mode': 'EDIT_GPENCIL',
+            'modev3': 'EDIT_GREASE_PENCIL',
             'active_tools': [],
             'tools': [
                 {'name': 'Select Box', 'tool': 'builtin.select_box', 'icon': 'object_select', 'default': True},
@@ -104,7 +108,8 @@ class ToolData():
                 {'name': 'Radius', 'tool': 'builtin.radius', 'icon': 'edit_radius', 'default': True},
                 {'name': 'Bend', 'tool': 'builtin.bend', 'icon': 'edit_bend', 'default': False},
                 {'name': 'Shear', 'tool': 'builtin.shear', 'icon': 'edit_shear', 'default': False},
-                {'name': 'Transform Fill', 'tool': 'builtin.transform_fill', 'icon': 'edit_transform_fill', 'default': False},
+                {'name': 'Transform Fill', 'tool': 'builtin.transform_fill',
+                    'icon': 'edit_transform_fill', 'default': False},
                 {'name': 'Interpolate', 'tool': 'builtin.interpolate', 'icon': 'edit_interpolate', 'default': True},
             ]
         }
@@ -112,6 +117,7 @@ class ToolData():
             'name': 'Sculpt Mode',
             'name_short': 'Sculpt',
             'mode': 'SCULPT_GPENCIL',
+            'modev3': 'SCULPT_GREASE_PENCIL',
             'active_tools': [],
             'tools': [
                 {'name': 'Smooth', 'tool': 'builtin_brush.Smooth', 'icon': 'sculpt_smooth', 'default': True},
@@ -129,6 +135,7 @@ class ToolData():
             'name': 'Object Mode',
             'name_short': 'Object',
             'mode': 'OBJECT',
+            'modev3': 'OBJECT',
             'active_tools': [],
             'tools': [
                 {'name': 'Select Box', 'tool': 'builtin.select_box', 'icon': 'object_select', 'default': True},
@@ -143,12 +150,11 @@ class ToolData():
             ]
         }
 
-
     # Get active modes and tools (enabled in the preferences)
     def get_active_modes_and_tools(self):
         # Sync tool settings with preferences
         preferences.get_tool_preferences()
-        
+
         # Iterate all modes, in user preferenced order
         self.mode_of_hotkey = {}
         active_modes = []
@@ -156,7 +162,7 @@ class ToolData():
         for mode_i in self.mode_order:
             # Get mode
             mode = self.modes[mode_i]
-            
+
             # Collect enabled tools
             mode_obj = self.tools_per_mode[mode]
             active_tools = []
@@ -164,16 +170,16 @@ class ToolData():
                 if tool['enabled']:
                     active_tools.append(tool_i)
             mode_obj['active_tools'] = active_tools
-            
+
             # Add to active modes when one or more tools are enabled
             if len(active_tools) > 0:
                 active_modes.append((mode, box_i))
-                
+
                 # Assign hotkey to mode
                 self.mode_of_hotkey[self.mode_hotkeys[box_i]] = mode
-                
+
                 box_i += 1
-        
+
         # Get corresponding box layout for number of active modes
         # and set box index belonging to mode
         self.active_modes = []
@@ -190,12 +196,11 @@ class ToolData():
         labels[2][1] = '○'
         self.mode_order_labels = labels
 
-
     # Load tool icons as gpu textures
     def get_tool_icon_textures(self):
         # Get icon folder in addon directory
         local_dir = path.dirname(path.abspath(__file__)) + self.ICON_PATH
-        
+
         # Iterate modes and tools
         self.textures = {}
         for mode in self.modes:
@@ -207,10 +212,10 @@ class ToolData():
                     # Get image
                     file = bpy.path.abspath(local_dir + icon + '.png')
                     img = bpy.data.images.load(file)
-                    
+
                     # Convert to texture
                     self.textures[icon] = gpu.texture.from_image(img)
-                    
+
                     # Remove image
                     bpy.data.images.remove(img)
 
@@ -225,7 +230,7 @@ class ToolData():
             # Load image
             file = bpy.path.abspath(local_dir + icon + '.png')
             img = bpy.data.images.load(file)
-            
+
             # Replace color in image
             img.pixels.foreach_get(img_np)
             new_color_img = np.empty((96, 96, 4), dtype=np.float32)
@@ -233,10 +238,10 @@ class ToolData():
             new_color_img[:, :, 3] = img_np.reshape((96, 96, 4))[:, :, 3]
             new_color_img[new_color_img[:, :, 3] == 0] = 0
             img.pixels.foreach_set(new_color_img.ravel())
-            
+
             # Convert to texture
             self.textures[icon] = gpu.texture.from_image(img)
-            
+
             # Remove image
             bpy.data.images.remove(img)
 

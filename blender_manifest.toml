@@ -1,0 +1,26 @@
+schema_version = "1.0.0"
+
+# Example of manifest file for a Blender extension
+# Change the values according to your extension
+id = "grease_pencil_tool_wheel"
+version = "1.0.5"
+name = "GP Tool Wheel"
+tagline = "Extended pie menu for selecting Grease Pencil tools quickly"
+maintainer = "Sietse Brouwer <sietse@hetvrijeoog.nl>"
+# Supported types: "add-on", "theme"
+type = "add-on"
+
+# Optional link to documentation, support, source files, etc
+website = "https://github.com/SietseB/GP-Tool-Wheel"
+
+# Optional list defined by Blender and server, see:
+# https://docs.blender.org/manual/en/dev/extensions/tags.html
+tags = ["3D View", "Grease Pencil"]
+
+blender_version_min = "4.2.0"
+# Optional: maximum supported Blender version
+# blender_version_max = "5.1.0"
+
+# License conforming to https://spdx.org/licenses/ (use "SPDX: prefix)
+# https://docs.blender.org/manual/en/dev/extensions/licenses.html
+license = ["SPDX:GPL-3.0-or-later"]
