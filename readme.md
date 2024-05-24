@@ -60,6 +60,7 @@ Up to Blender 4.1, installation of the add-on is done in the usual Blender way:
 
 ## Changelog
 - v1.0.5 - 2024-05-23
+  - Now uses UI scale: bigger wheel when UI scale is higher
   - Support for Grease Pencil v3
   - Save and load preferences to a custom file path
   - Made ready as extension for extensions.blender.org

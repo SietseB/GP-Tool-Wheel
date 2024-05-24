@@ -25,11 +25,11 @@ class ToolButton():
     BUTTON_IMG_PADDING = 2
     BUTTON_SIZE = BUTTON_IMG_SIZE + 2 * BUTTON_IMG_PADDING + 1
 
-    def __init__(self, index):
+    def __init__(self, index, ui_scale):
         self.x = 0
         self.y = 0
-        self.w = self.BUTTON_IMG_SIZE
-        self.h = self.BUTTON_IMG_SIZE
+        self.w = round(self.BUTTON_IMG_SIZE * ui_scale)
+        self.h = round(self.BUTTON_IMG_SIZE * ui_scale)
         self.tool_index = index
         self.separator_right = False
         self.separator_top = False
@@ -40,14 +40,14 @@ class ModeBox():
     BUTTONS_PER_ROW = 4
     TITLE_HEIGHT = 18
 
-    def __init__(self, mode, box_index, tool_count, hotkey):
+    def __init__(self, mode, box_index, tool_count, hotkey, ui_scale):
         self.x = 0
         self.y = 0
         self.row_count = math.ceil(tool_count / self.BUTTONS_PER_ROW)
-        self.w = 2 * self.BOX_PADDING + self.BUTTONS_PER_ROW * ToolButton.BUTTON_SIZE
-        self.h = (2 * self.BOX_PADDING +
-                  self.row_count * ToolButton.BUTTON_SIZE +
-                  self.TITLE_HEIGHT)
+        self.w = round((2 * self.BOX_PADDING + self.BUTTONS_PER_ROW * ToolButton.BUTTON_SIZE) * ui_scale)
+        self.h = round((2 * self.BOX_PADDING +
+                        self.row_count * ToolButton.BUTTON_SIZE +
+                        self.TITLE_HEIGHT) * ui_scale)
         self.upwards = box_index in {0, 1, 2}
         self.mode = mode
         self.index = box_index
@@ -104,6 +104,7 @@ class ToolWheel():
         # Init
         self.active_mode = ''
         self.active_tool = -1
+        ui_scale = context.preferences.system.ui_scale
 
         # Store area and wheel center
         self.area = area
@@ -122,7 +123,7 @@ class ToolWheel():
         self.boxes = []
         for mode, box_index, hotkey in td.active_modes:
             tool_count = len(td.tools_per_mode[mode]['active_tools'])
-            box = ModeBox(mode, box_index, tool_count, hotkey)
+            box = ModeBox(mode, box_index, tool_count, hotkey, ui_scale)
             self.boxes.append(box)
 
         # No active modes (unlikely, but we have to check)
@@ -132,7 +133,7 @@ class ToolWheel():
         # Position boxes
         box_w = self.boxes[0].w
         box_w_half = int(box_w * 0.5)
-        wheel_radius = box_w + self.BOX_SPACING
+        wheel_radius = box_w + self.BOX_SPACING * ui_scale
         dx = math.cos(self.BOX_ANGLE) * wheel_radius
         dy = math.sin(self.BOX_ANGLE) * wheel_radius
         wheel_radius = int(wheel_radius * 0.5)
@@ -204,8 +205,8 @@ class ToolWheel():
                 box.y += dy
 
         # Create buttons within boxes
-        padding = ModeBox.BOX_PADDING
-        bsize = ToolButton.BUTTON_SIZE
+        padding = ModeBox.BOX_PADDING * ui_scale
+        bsize = ToolButton.BUTTON_SIZE * ui_scale
         for box in self.boxes:
             box.tool_buttons = []
             right_to_left = box.index in {0, 5}
@@ -214,7 +215,7 @@ class ToolWheel():
             dir = -1 if right_to_left else 1
             for tool_i in td.tools_per_mode[box.mode]['active_tools']:
                 # Create button
-                button = ToolButton(tool_i)
+                button = ToolButton(tool_i, ui_scale)
 
                 # Calculate position
                 button.x = box.x + padding + bsize * column
@@ -238,11 +239,11 @@ class ToolWheel():
                     row += 1
 
             # Set position of box title
-            box.title_x = box.x + box.BOX_PADDING
+            box.title_x = box.x + box.BOX_PADDING * ui_scale
             if box.upwards:
-                box.title_y = box.y - box.BOX_PADDING - ModeBox.TITLE_HEIGHT + 7
+                box.title_y = box.y - box.BOX_PADDING * ui_scale - ModeBox.TITLE_HEIGHT * ui_scale + 7 * ui_scale
             else:
-                box.title_y = box.y - box.h + box.BOX_PADDING + 3
+                box.title_y = box.y - box.h + box.BOX_PADDING * ui_scale + 3
 
         # Get pie menu colors from active theme
         theme = context.preferences.themes.items()[0][0]
@@ -264,7 +265,7 @@ class ToolWheel():
         self.shader_icon_bg.bind()
 
         # Create icon background batch
-        bsize = ToolButton.BUTTON_IMG_SIZE
+        bsize = ToolButton.BUTTON_IMG_SIZE * ui_scale
         verts = ((0, 0), (bsize, 0), (0, -bsize), (bsize, -bsize))
         self.batch_icon_bg = batch_for_shader(self.shader_icon_bg, 'TRIS', {'pos': verts}, indices=self.rect_indices)
 
@@ -280,10 +281,11 @@ class ToolWheel():
 
                 # Darken title area
                 color = box_title_bg if sel == 0 else box_title_bg_sel
+                title_h = round((ModeBox.TITLE_HEIGHT + 2) * ui_scale)
                 if box.upwards:
-                    img_np[-20:] = color
+                    img_np[-title_h:] = color
                 else:
-                    img_np[0:20] = color
+                    img_np[0:title_h] = color
 
                 # Get rounded corners
                 self.get_box_rounded_corners(img_np, box.w, box.h)
@@ -301,14 +303,16 @@ class ToolWheel():
         # Create texture for hint box
         if self.show_hints:
             # Create image
-            img = bpy.data.images.new('temp_gp_tool_wheel', self.HINT_WIDTH, self.HINT_HEIGHT, alpha=True)
-            img_np = np.empty((self.HINT_HEIGHT, self.HINT_WIDTH, 4), dtype=np.float32)
+            hint_w = round(self.HINT_WIDTH * ui_scale)
+            hint_h = round(self.HINT_HEIGHT * ui_scale)
+            img = bpy.data.images.new('temp_gp_tool_wheel', hint_w, hint_h, alpha=True)
+            img_np = np.empty((hint_h, hint_w, 4), dtype=np.float32)
 
             # Fill with box color
             img_np[:, :] = hint_color
 
             # Get rounded corners
-            self.get_box_rounded_corners(img_np, self.HINT_WIDTH, self.HINT_HEIGHT)
+            self.get_box_rounded_corners(img_np, hint_w, hint_h)
             img.pixels.foreach_set(img_np.ravel())
 
             # Convert to texture
@@ -336,7 +340,8 @@ class ToolWheel():
             return
 
         # Inits
-        ipad = ToolButton.BUTTON_IMG_PADDING
+        ui_scale = context.preferences.system.ui_scale
+        ipad = ToolButton.BUTTON_IMG_PADDING * ui_scale
         gpu.state.blend_set('ALPHA')
         self.active_mode = ''
 
@@ -378,15 +383,16 @@ class ToolWheel():
                 tool = td.tools_per_mode[box.mode]['tools'][button.tool_index]
 
                 # Is the icon active (mouse pointing at it)?
-                is_active = (button.x <= self.mouse_x <= button.x + button.BUTTON_SIZE and
-                             button.y - button.BUTTON_SIZE <= self.mouse_y <= button.y)
+                is_active = (button.x <= self.mouse_x <= button.x + button.BUTTON_SIZE * ui_scale and
+                             button.y - button.BUTTON_SIZE * ui_scale <= self.mouse_y <= button.y)
                 if is_active:
                     active_tool = button.tool_index
 
                 # Draw tool icon background
                 if is_active:
                     gpu.matrix.push()
-                    gpu.matrix.translate((button.x + button.BUTTON_IMG_PADDING, button.y - button.BUTTON_IMG_PADDING))
+                    gpu.matrix.translate((button.x + button.BUTTON_IMG_PADDING * ui_scale,
+                                         button.y - button.BUTTON_IMG_PADDING * ui_scale))
                     color = self.highlight_color
                     self.shader_icon_bg.uniform_float('color', color)
                     self.batch_icon_bg.draw(self.shader_icon_bg)
@@ -402,14 +408,14 @@ class ToolWheel():
                 if button.separator_right or button.separator_top:
                     coords = []
                     if button.separator_right:
-                        x0 = button.x + button.w + ModeBox.BOX_PADDING + box.sep_offset
-                        y0 = button.y - ModeBox.BOX_PADDING
+                        x0 = button.x + button.w + ModeBox.BOX_PADDING * ui_scale + box.sep_offset
+                        y0 = button.y - ModeBox.BOX_PADDING * ui_scale
                         y1 = button.y - button.h
                         coords.append((x0, y0))
                         coords.append((x0, y1))
                     if button.separator_top:
-                        x0 = box.x + ModeBox.BOX_PADDING + box.sep_offset
-                        x1 = box.x + box.w - ModeBox.BOX_PADDING + box.sep_offset
+                        x0 = box.x + ModeBox.BOX_PADDING * ui_scale + box.sep_offset
+                        x1 = box.x + box.w - ModeBox.BOX_PADDING * ui_scale + box.sep_offset
                         y0 = button.y + box.sep_offset
                         coords.append((x0, y0))
                         coords.append((x1, y0))
@@ -455,15 +461,17 @@ class ToolWheel():
         # Draw active mode or tool name as hint
         # Note: this must be done last, because blf messes with the alpha state
         if bpy.app.version >= (3, 4, 0):
-            blf.size(0, 11)
+            blf.size(0, 11 * ui_scale)
         else:
-            blf.size(0, 11, 72)
+            blf.size(0, 11 * ui_scale, 72)
 
         if self.show_hints and active_box is not None:
             # Draw rectangle in center of wheel
-            dx = self.center_x - self.HINT_WIDTH * 0.5
-            dy = self.center_y - self.HINT_HEIGHT * 0.5
-            draw_texture_2d(self.hint_texture, (dx, dy), self.HINT_WIDTH, self.HINT_HEIGHT)
+            hint_w = round(self.HINT_WIDTH * ui_scale)
+            hint_h = round(self.HINT_HEIGHT * ui_scale)
+            dx = self.center_x - hint_w * 0.5
+            dy = self.center_y - hint_h * 0.5
+            draw_texture_2d(self.hint_texture, (dx, dy), hint_w, hint_h)
 
             # Draw hint text
             if self.active_tool == -1:
@@ -473,7 +481,7 @@ class ToolWheel():
             tw, _ = blf.dimensions(0, hint)
             tx = self.center_x - tw * 0.5
             blf.color(0, self.text_color[0], self.text_color[1], self.text_color[2], 0.8)
-            blf.position(0, tx, dy + 6, 0)
+            blf.position(0, tx, dy + 6 * ui_scale, 0)
             blf.draw(0, hint)
 
         # Draw centered box title and hotkey on the right
@@ -481,7 +489,7 @@ class ToolWheel():
             # Title
             text = td.tools_per_mode[box.mode]['name']
             tw, _ = blf.dimensions(0, text)
-            dx = int((box.w - tw) * 0.5) - ModeBox.BOX_PADDING
+            dx = int((box.w - tw) * 0.5) - ModeBox.BOX_PADDING * ui_scale
             alpha = 0.9 if box.mode == self.active_mode else 0.25
             blf.color(0, self.text_color[0], self.text_color[1], self.text_color[2], alpha)
             blf.position(0, box.title_x + dx, box.title_y, 0)
@@ -490,7 +498,7 @@ class ToolWheel():
             # Hotkey
             text = box.hotkey
             tw, _ = blf.dimensions(0, text)
-            dx = box.x + box.w - ModeBox.BOX_PADDING * 2 - tw
+            dx = box.x + box.w - ModeBox.BOX_PADDING * 2 * ui_scale - tw
             alpha = 0.4 if box.mode == self.active_mode else 0.15
             blf.color(0, self.text_color[0], self.text_color[1], self.text_color[2], alpha)
             blf.position(0, dx, box.title_y, 0)
