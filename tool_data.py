@@ -40,6 +40,17 @@ class ToolData():
             [0, 1, 2, 3, 5],
             [0, 1, 2, 3, 4, 5],
         ]
+        # Non-draw brush assets in Draw mode
+        self.non_draw_assets = [
+            '/Fill',
+            '/Tint',
+            '/Eraser',
+        ]
+        # Tool index for Draw tool
+        self.draw_tool_index = 0
+        self.tint_tool_index = 3
+
+        # Available tools per mode
         self.tools_per_mode = {}
         s = self.tools_per_mode
         s['weight'] = {
@@ -49,11 +60,36 @@ class ToolData():
             'modev3': 'WEIGHT_GREASE_PENCIL',
             'active_tools': [],
             'tools': [
-                {'name': 'Weight', 'tool': 'builtin_brush.Weight', 'icon': 'weight_paint_weight', 'default': True},
-                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': True},
-                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': True},
-                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': True},
-                {'name': 'Gradient', 'tool': 'builtin.gradient', 'icon': 'weight_paint_gradient', 'default': False},
+                {'name': 'Weight', 'tool': 'builtin_brush.Weight', 'icon': 'weight_paint_weight', 'default': True, 'as_asset': {
+                    'tool': 'builtin.brush',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.blur',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.average',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.smear',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Gradient', 'tool': 'builtin_brush.Gradient', 'icon': 'weight_paint_gradient', 'default': False, 'as_asset': {
+                    'tool': 'builtin_brush.gradient',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
             ]
         }
         s['draw'] = {
@@ -63,19 +99,85 @@ class ToolData():
             'modev3': 'PAINT_GREASE_PENCIL',
             'active_tools': [],
             'tools': [
-                {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'draw_draw', 'default': True},
-                {'name': 'Fill', 'tool': 'builtin_brush.Fill', 'icon': 'draw_fill', 'default': True},
-                {'name': 'Erase', 'tool': 'builtin_brush.Erase', 'icon': 'draw_erase', 'default': True},
-                {'name': 'Tint', 'tool': 'builtin_brush.Tint', 'icon': 'draw_tint', 'default': True},
-                {'name': 'Cutter', 'tool': 'builtin.cutter', 'icon': 'draw_cutter', 'default': True},
-                {'name': 'Eyedropper', 'tool': 'builtin.eyedropper', 'icon': 'draw_eyedropper', 'default': True},
-                {'name': 'Line', 'tool': 'builtin.line', 'icon': 'draw_line', 'default': True},
-                {'name': 'Polyline', 'tool': 'builtin.polyline', 'icon': 'draw_polyline', 'default': True},
-                {'name': 'Arc', 'tool': 'builtin.arc', 'icon': 'draw_arc', 'default': True},
-                {'name': 'Curve', 'tool': 'builtin.curve', 'icon': 'draw_curve', 'default': True},
-                {'name': 'Box', 'tool': 'builtin.box', 'icon': 'draw_box', 'default': True},
-                {'name': 'Circle', 'tool': 'builtin.circle', 'icon': 'draw_circle', 'default': True},
-                {'name': 'Interpolate', 'tool': 'builtin.interpolate', 'icon': 'edit_interpolate', 'default': False},
+                {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'draw_draw', 'default': True, 'as_asset': {
+                    'tool': 'builtin.brush',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_draw.blend/Brush/Pencil'
+                }},
+                {'name': 'Fill', 'tool': 'builtin_brush.Fill', 'icon': 'draw_fill', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.Fill',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Erase', 'tool': 'builtin_brush.Erase', 'icon': 'draw_erase', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.Erase',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Tint', 'tool': 'builtin_brush.Tint', 'icon': 'draw_tint', 'default': True, 'as_asset': {
+                    'tool': '',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_draw.blend/Brush/Tint'
+                }},
+                {'name': 'Cutter', 'tool': 'builtin.cutter', 'icon': 'draw_cutter', 'default': True, 'as_asset': {
+                    'tool': 'builtin.trim',
+                    'name': 'Trim',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Eyedropper', 'tool': 'builtin.eyedropper', 'icon': 'draw_eyedropper', 'default': True, 'as_asset': {
+                    'tool': 'builtin.eyedropper',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Line', 'tool': 'builtin.line', 'icon': 'draw_line', 'default': True, 'as_asset': {
+                    'tool': 'builtin.line',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Polyline', 'tool': 'builtin.polyline', 'icon': 'draw_polyline', 'default': True, 'as_asset': {
+                    'tool': 'builtin.polyline',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Arc', 'tool': 'builtin.arc', 'icon': 'draw_arc', 'default': True, 'as_asset': {
+                    'tool': 'builtin.arc',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Curve', 'tool': 'builtin.curve', 'icon': 'draw_curve', 'default': True, 'as_asset': {
+                    'tool': 'builtin.curve',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Box', 'tool': 'builtin.box', 'icon': 'draw_box', 'default': True, 'as_asset': {
+                    'tool': 'builtin.box',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Circle', 'tool': 'builtin.circle', 'icon': 'draw_circle', 'default': True, 'as_asset': {
+                    'tool': 'builtin.circle',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Interpolate', 'tool': 'builtin.interpolate', 'icon': 'edit_interpolate', 'default': False, 'as_asset': {
+                    'tool': 'builtin.interpolate',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
             ]
         }
         s['vertex'] = {
@@ -85,11 +187,36 @@ class ToolData():
             'modev3': 'VERTEX_GREASE_PENCIL',
             'active_tools': [],
             'tools': [
-                {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'vertex_paint_draw', 'default': True},
-                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': True},
-                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': True},
-                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': True},
-                {'name': 'Replace', 'tool': 'builtin_brush.Replace', 'icon': 'vertex_paint_replace', 'default': True},
+                {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'vertex_paint_draw', 'default': True, 'as_asset': {
+                    'tool': 'builtin.brush',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.blur',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.average',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.smear',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Replace', 'tool': 'builtin_brush.Replace', 'icon': 'vertex_paint_replace', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.replace',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
             ]
         }
         s['edit'] = {
@@ -109,7 +236,14 @@ class ToolData():
                 {'name': 'Bend', 'tool': 'builtin.bend', 'icon': 'edit_bend', 'default': False},
                 {'name': 'Shear', 'tool': 'builtin.shear', 'icon': 'edit_shear', 'default': False},
                 {'name': 'Transform Fill', 'tool': 'builtin.transform_fill',
-                    'icon': 'edit_transform_fill', 'default': False},
+                    'icon': 'edit_transform_fill', 'default': False, 'as_asset': {
+                        'tool': 'builtin.texture_gradient',
+                        'name': 'Gradient',
+                        'icon': 'weight_paint_gradient',
+                        'asset_library_type': '',
+                        'asset_library_identifier': '',
+                        'relative_asset_identifier': ''
+                    }},
                 {'name': 'Interpolate', 'tool': 'builtin.interpolate', 'icon': 'edit_interpolate', 'default': True},
             ]
         }
@@ -120,15 +254,61 @@ class ToolData():
             'modev3': 'SCULPT_GREASE_PENCIL',
             'active_tools': [],
             'tools': [
-                {'name': 'Smooth', 'tool': 'builtin_brush.Smooth', 'icon': 'sculpt_smooth', 'default': True},
-                {'name': 'Thickness', 'tool': 'builtin_brush.Thickness', 'icon': 'sculpt_thickness', 'default': True},
-                {'name': 'Strength', 'tool': 'builtin_brush.Strength', 'icon': 'sculpt_strength', 'default': True},
-                {'name': 'Randomize', 'tool': 'builtin_brush.Randomize', 'icon': 'sculpt_randomize', 'default': True},
-                {'name': 'Grab', 'tool': 'builtin_brush.Grab', 'icon': 'sculpt_grab', 'default': True},
-                {'name': 'Push', 'tool': 'builtin_brush.Push', 'icon': 'sculpt_push', 'default': True},
-                {'name': 'Twist', 'tool': 'builtin_brush.Twist', 'icon': 'sculpt_twist', 'default': False},
-                {'name': 'Pinch', 'tool': 'builtin_brush.Pinch', 'icon': 'sculpt_pinch', 'default': False},
-                {'name': 'Clone', 'tool': 'builtin_brush.Clone', 'icon': 'sculpt_clone', 'default': True},
+                {'name': 'Smooth', 'tool': 'builtin_brush.Smooth', 'icon': 'sculpt_smooth', 'default': True, 'as_asset': {
+                    'tool': '',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Smooth'
+                }},
+                {'name': 'Thickness', 'tool': 'builtin_brush.Thickness', 'icon': 'sculpt_thickness', 'default': True, 'as_asset': {
+                    'tool': '',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Thickness'
+                }},
+                {'name': 'Strength', 'tool': 'builtin_brush.Strength', 'icon': 'sculpt_strength', 'default': True, 'as_asset': {
+                    'tool': '',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Strength'
+                }},
+                {'name': 'Randomize', 'tool': 'builtin_brush.Randomize', 'icon': 'sculpt_randomize', 'default': True, 'as_asset': {
+                    'tool': '',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Randomize'
+                }},
+                {'name': 'Grab', 'tool': 'builtin_brush.Grab', 'icon': 'sculpt_grab', 'default': True, 'as_asset': {
+                    'tool': '',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Grab'
+                }},
+                {'name': 'Push', 'tool': 'builtin_brush.Push', 'icon': 'sculpt_push', 'default': True, 'as_asset': {
+                    'tool': '',
+                    'name': 'Pull',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Pull'
+                }},
+                {'name': 'Twist', 'tool': 'builtin_brush.Twist', 'icon': 'sculpt_twist', 'default': False, 'as_asset': {
+                    'tool': '',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Twist'
+                }},
+                {'name': 'Pinch', 'tool': 'builtin_brush.Pinch', 'icon': 'sculpt_pinch', 'default': False, 'as_asset': {
+                    'tool': '',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Pinch'
+                }},
+                {'name': 'Clone', 'tool': 'builtin_brush.Clone', 'icon': 'sculpt_clone', 'default': True, 'as_asset': {
+                    'tool': '',
+                    'asset_library_type': 'ESSENTIALS',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Clone'
+                }},
             ]
         }
         s['object'] = {

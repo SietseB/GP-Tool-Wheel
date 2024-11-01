@@ -1,3 +1,15 @@
+bl_info = {
+    "name": "GP Tool Wheel",
+    "author": "Sietse Brouwer",
+    "version": (1, 0, 6),
+    "blender": (3, 0, 0),
+    "description": "Extended pie menu for selecting Grease Pencil tools quickly.",
+    "doc_url": "https://github.com/SietseB/GP-Tool-Wheel",
+    "tracker_url": "https://github.com/SietseB/GP-Tool-Wheel/issues",
+    "category": "3D View"
+}
+
+
 if 'bpy' in locals():
     import importlib
     importlib.reload(preferences)

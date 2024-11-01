@@ -13,7 +13,7 @@ class GPENCIL_OT_tool_wheel(Operator):
 
     _draw_handle = None
     _brush_sizes = [0, 0, 0, 0, 0]
-    _unprojected_radius = [0, 0, 0, 0, 0]
+    _unprojected_radius = [0.0, 0.0, 0.0, 0.0, 0.0]
     tool_wheel = tool_wheel_draw.ToolWheel()
 
     @classmethod
@@ -34,10 +34,32 @@ class GPENCIL_OT_tool_wheel(Operator):
         # Get Grease Pencil version
         is_gp_legacy = context.object.type == 'GPENCIL'
 
-        # Get selected mode
+        # From 4.3 on, use brush assets
+        use_brush_assets = (bpy.app.version >= (4, 3, 0))
+        brush_asset = None
+
+        # Get selected mode.
         mode = td.tools_per_mode[new_mode]
 
-        # Switch to mode
+        # Remember last used draw brush
+        if use_brush_assets and context.mode == 'PAINT_GREASE_PENCIL':
+            brush_asset = context.tool_settings.gpencil_paint.brush_asset_reference
+            if brush_asset is not None:
+                # When the brush asset is a fill, tint or eraser, we don't store it.
+                # We only want to remember real draw brushes.
+                is_draw_brush = True
+                for non_draw_brush in td.non_draw_assets:
+                    if brush_asset.relative_asset_identifier.find(non_draw_brush) != -1:
+                        is_draw_brush = False
+                        break
+
+                if is_draw_brush:
+                    # Store the draw brush asset
+                    td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']['asset_library_type'] = brush_asset.asset_library_type
+                    td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']['asset_library_identifier'] = brush_asset.asset_library_identifier
+                    td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']['relative_asset_identifier'] = brush_asset.relative_asset_identifier
+
+        # Switch to mode.
         if is_gp_legacy and mode['mode'] != context.mode:
             match(new_mode):
                 case 'object':
@@ -59,39 +81,69 @@ class GPENCIL_OT_tool_wheel(Operator):
                 case 'edit':
                     bpy.ops.object.mode_set(mode='EDIT')
                 case 'sculpt':
-                    bpy.ops.object.mode_set(mode='SCULPT_GPENCIL')
+                    bpy.ops.object.mode_set(mode='SCULPT_GREASE_PENCIL')
                 case 'draw':
-                    bpy.ops.object.mode_set(mode='PAINT_GPENCIL')
+                    bpy.ops.object.mode_set(mode='PAINT_GREASE_PENCIL')
                 case 'weight':
-                    bpy.ops.object.mode_set(mode='WEIGHT_GPENCIL')
+                    bpy.ops.object.mode_set(mode='WEIGHT_GREASE_PENCIL')
                 case 'vertex':
-                    bpy.ops.object.mode_set(mode='VERTEX_GPENCIL')
+                    bpy.ops.object.mode_set(mode='VERTEX_GREASE_PENCIL')
         elif new_tool == -1:
             return {'CANCELLED'}
 
-        # Switch to tool
-        if new_tool != -1:
-            tool = td.tools_per_mode[new_mode]['tools'][new_tool]['tool']
-            # Handle 'add' tools
-            if tool.startswith('add.'):
-                match tool:
-                    case 'add.empty':
-                        bpy.ops.object.empty_add(radius=0.1)
-                    case 'add.bone':
-                        bpy.ops.object.armature_add(radius=0.4)
-                    case 'add.gp.stroke':
-                        if is_gp_legacy:
-                            bpy.ops.object.gpencil_add(type='STROKE')
-                        else:
-                            bpy.ops.object.grease_pencil_add(type='STROKE')
-                    case 'add.gp.empty':
-                        if is_gp_legacy:
-                            bpy.ops.object.gpencil_add(type='EMPTY')
-                        else:
-                            bpy.ops.object.grease_pencil_add(type='EMPTY')
-            else:
-                # Switch to tool
+        # Get selected tool
+        if new_tool == -1:
+            return {'FINISHED'}
+
+        tool = mode['tools'][new_tool]['tool']
+        tool_as_asset = None
+        if use_brush_assets and 'as_asset' in mode['tools'][new_tool]:
+            tool_as_asset = mode['tools'][new_tool]['as_asset']
+
+        # Handle 'add' tools
+        if tool.startswith('add.'):
+            match tool:
+                case 'add.empty':
+                    bpy.ops.object.empty_add(radius=0.1)
+                case 'add.bone':
+                    bpy.ops.object.armature_add(radius=0.4)
+                case 'add.gp.stroke':
+                    if is_gp_legacy:
+                        bpy.ops.object.gpencil_add(type='STROKE')
+                    else:
+                        bpy.ops.object.grease_pencil_add(type='STROKE')
+                case 'add.gp.empty':
+                    if is_gp_legacy:
+                        bpy.ops.object.gpencil_add(type='EMPTY')
+                    else:
+                        bpy.ops.object.grease_pencil_add(type='EMPTY')
+        else:
+            # Switch to tool
+            if tool_as_asset is None:
                 bpy.ops.wm.tool_set_by_id(name=tool)
+            else:
+                # From 4.3 on, use brush assets for drawing and sculpting and tools for all the others
+                use_asset = False if tool_as_asset['tool'] else True
+
+                # Edge case: when switching from from a non-draw brush to the Draw tool,
+                # use the previously stored draw brush asset.
+                if new_mode == 'draw' and mode['tools'][new_tool]['name'] == 'Draw':
+                    brush_asset = context.tool_settings.gpencil_paint.brush_asset_reference
+                    if brush_asset is not None:
+                        for non_draw_brush in td.non_draw_assets:
+                            if brush_asset.relative_asset_identifier.find(non_draw_brush) != -1:
+                                use_asset = True
+                                break
+
+                # Switch to the new tool or brush asset
+                if use_asset:
+                    # Set brush asset
+                    bpy.ops.brush.asset_activate(asset_library_type=tool_as_asset['asset_library_type'],
+                                                 asset_library_identifier=tool_as_asset['asset_library_identifier'],
+                                                 relative_asset_identifier=tool_as_asset['relative_asset_identifier'])
+                else:
+                    # Set tool
+                    bpy.ops.wm.tool_set_by_id(name=tool_as_asset['tool'])
 
         return {'FINISHED'}
 

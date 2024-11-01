@@ -182,6 +182,15 @@ class ToolWheel():
             if region.alignment == 'RIGHT' and region.width > right_padding:
                 right_padding = region.width
 
+        # Get height of tool header and brush asset shelf
+        top_padding = 2
+        bottom_padding = 2
+        for region in area.regions:
+            if region.type in ['HEADER', 'TOOL_HEADER']:
+                top_padding += region.height
+            if region.type in ['ASSET_SHELF', 'ASSET_SHELF_HEADER']:
+                bottom_padding += region.height
+
         # Make sure bounding box is within area bounds
         dx = 0
         dy = 0
@@ -190,11 +199,11 @@ class ToolWheel():
             max_x += dx
         if max_x > area.width - right_padding:
             dx = area.width - right_padding - max_x
-        if min_y < 3:
-            dy = 3 - min_y
+        if min_y < bottom_padding:
+            dy = bottom_padding - min_y
             max_y += dy
-        if max_y > area.height - 54:
-            dy = area.height - 54 - max_y
+        if max_y > area.height - top_padding:
+            dy = area.height - top_padding - max_y
 
         # Adjust xy of boxes if not within area bounds
         if dx != 0 or dy != 0:
@@ -344,6 +353,7 @@ class ToolWheel():
         ipad = ToolButton.BUTTON_IMG_PADDING * ui_scale
         gpu.state.blend_set('ALPHA')
         self.active_mode = ''
+        use_brush_assets = (bpy.app.version >= (4, 3, 0))
 
         # Get active mode, based on angle of mouse in the wheel
         dx = self.mouse_x - self.center_x
@@ -367,7 +377,8 @@ class ToolWheel():
                 active_box = box
 
         # Draw center wheel
-        draw_texture_2d(td.textures['inner_wheel'], (self.center_x - 24, self.center_y - 24), 48, 48)
+        draw_texture_2d(td.textures['inner_wheel'], (self.center_x - 24 * ui_scale,
+                        self.center_y - 24 * ui_scale), 48 * ui_scale, 48 * ui_scale)
 
         # Iterate boxes (modes)
         active_tool = -1
@@ -399,7 +410,10 @@ class ToolWheel():
                     gpu.matrix.pop()
 
                 # Draw tool icon
-                texture = td.textures[tool['icon']]
+                icon = tool['icon']
+                if use_brush_assets and 'as_asset' in tool and 'icon' in tool['as_asset']:
+                    icon = tool['as_asset']['icon']
+                texture = td.textures[icon]
                 x = button.x + ipad
                 y = button.y - button.h - ipad
                 draw_texture_2d(texture, (x, y), button.w, button.h)
@@ -429,34 +443,34 @@ class ToolWheel():
         # Draw dot on inner wheel
         if significant_angle:
             angle = math.radians(angle)
-            dx = self.center_x + math.cos(angle) * 19 - 4
-            dy = self.center_y + math.sin(angle) * 19 - 4
-            draw_texture_2d(td.textures['active_dot'], (dx, dy), 8, 8)
+            dx = self.center_x + math.cos(angle) * 19 * ui_scale - 4 * ui_scale
+            dy = self.center_y + math.sin(angle) * 19 * ui_scale - 4 * ui_scale
+            draw_texture_2d(td.textures['active_dot'], (dx, dy), 8 * ui_scale, 8 * ui_scale)
 
         # Draw dot on active box
         if active_box is not None:
             box = active_box
             match box.index:
                 case 0:
-                    dx = box.x + box.w + 2
-                    dy = box.y - box.h + 14
+                    dx = box.x + box.w + 2 * ui_scale
+                    dy = box.y - box.h + 14 * ui_scale
                 case 1:
-                    dx = box.x + box.w * 0.5 - 5
-                    dy = box.y - box.h - 12
+                    dx = box.x + box.w * 0.5 - 5 * ui_scale
+                    dy = box.y - box.h - 12 * ui_scale
                 case 2:
-                    dx = box.x - 12
-                    dy = box.y - box.h + 14
+                    dx = box.x - 12 * ui_scale
+                    dy = box.y - box.h + 14 * ui_scale
                 case 3:
-                    dx = box.x - 12
-                    dy = box.y - 24
+                    dx = box.x - 12 * ui_scale
+                    dy = box.y - 24 * ui_scale
                 case 4:
-                    dx = box.x + box.w * 0.5 - 5
-                    dy = box.y + 2
+                    dx = box.x + box.w * 0.5 - 5 * ui_scale
+                    dy = box.y + 2 * ui_scale
                 case 5:
-                    dx = box.x + box.w + 2
-                    dy = box.y - 24
+                    dx = box.x + box.w + 2 * ui_scale
+                    dy = box.y - 24 * ui_scale
 
-            draw_texture_2d(td.textures['active_dot'], (dx, dy), 10, 10)
+            draw_texture_2d(td.textures['active_dot'], (dx, dy), 10 * ui_scale, 10 * ui_scale)
 
         # Draw active mode or tool name as hint
         # Note: this must be done last, because blf messes with the alpha state
@@ -477,7 +491,11 @@ class ToolWheel():
             if self.active_tool == -1:
                 hint = td.tools_per_mode[self.active_mode]['name']
             else:
-                hint = td.tools_per_mode[self.active_mode]['tools'][self.active_tool]['name']
+                tool = td.tools_per_mode[self.active_mode]['tools'][self.active_tool]
+                if use_brush_assets and 'as_asset' in tool and 'name' in tool['as_asset']:
+                    hint = tool['as_asset']['name']
+                else:
+                    hint = tool['name']
             tw, _ = blf.dimensions(0, hint)
             tx = self.center_x - tw * 0.5
             blf.color(0, self.text_color[0], self.text_color[1], self.text_color[2], 0.8)

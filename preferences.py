@@ -8,7 +8,7 @@ import json
 
 import bpy
 from bpy_extras.io_utils import ExportHelper, ImportHelper
-from bpy.props import BoolProperty, CollectionProperty, IntProperty, StringProperty
+from bpy.props import BoolProperty, CollectionProperty, IntProperty, StringProperty, EnumProperty
 from bpy.types import AddonPreferences, Operator, PropertyGroup, UIList
 
 from .tool_data import tool_data as td
@@ -158,7 +158,8 @@ class GPTOOLWHEEL_OT_SavePrefDefinition(Operator, ExportHelper):
         prefs = context.preferences.addons[__package__].preferences
         tools = []
         for tool in prefs.tools:
-            tools.append((tool.mode, tool.tool_index, tool.enabled))
+            tools.append((tool.mode, tool.tool_index, tool.enabled,
+                         tool.asset_lib_type, tool.asset_lib_id, tool.asset_id))
         mode_order = []
         for mode in prefs.mode_order:
             mode_order.append((mode.name, mode.order, mode.mode))
@@ -214,7 +215,13 @@ class GPTOOLWHEEL_OT_LoadPrefDefinition(Operator, ImportHelper):
         prefs.tools.clear()
         for tool in data['tools']:
             pref = prefs.tools.add()
-            pref.mode, pref.tool_index, pref.enabled = tool
+            if len(tool) == 3:
+                # Before version 4.3
+                pref.mode, pref.tool_index, pref.enabled = tool
+            else:
+                # From version 4.3 on
+                pref.mode, pref.tool_index, pref.enabled, pref.asset_lib_type, pref.asset_lib_id, pref.asset_id = tool
+
         prefs.mode_order.clear()
         for mode in data['mode_order']:
             pref = prefs.mode_order.add()
@@ -235,6 +242,9 @@ class GPTOOLWHEEL_OT_LoadPrefDefinition(Operator, ImportHelper):
 
         # Set text in operator button
         td.key_button_text = kmi.to_string()
+
+        # Fill empty preferences with default values
+        set_default_preferences()
 
         context.preferences.is_dirty = True
 
@@ -260,6 +270,9 @@ class GPToolWheel_PG_tool(PropertyGroup):
     mode: StringProperty()
     tool_index: IntProperty()
     enabled: BoolProperty(update=on_pref_change)
+    asset_lib_type: StringProperty(update=on_pref_change)
+    asset_lib_id: StringProperty(update=on_pref_change)
+    asset_id: StringProperty(update=on_pref_change)
 
 
 # GP Tool Wheel preferences
@@ -284,8 +297,20 @@ class GPToolWheelPreferences(AddonPreferences):
     def draw(self, _):
         layout = self.layout
         td.get_active_modes_and_tools()
+        use_brush_assets = (bpy.app.version >= (4, 3, 0))
+
+        # Save preference definition
+        box = layout.box()
+        col = box.column(align=True)
+        row = col.row()
+        row.operator('gp_tool_wheel.save_pref_definition')
+        row.operator('gp_tool_wheel.load_pref_definition')
+        col.separator(factor=1.5)
+        col.label(text='You can save and load the GP Tool Wheel preferences for backup purposes or', icon='FILE_TICK')
+        col.label(text='for distribution to other Blender installations.')
 
         # Keyboard shortcut
+        layout.separator(factor=0)
         box = layout.box()
         row = box.row()
         row.label(text='Keyboard shortcut for GP Tool Wheel:')
@@ -337,18 +362,51 @@ class GPToolWheelPreferences(AddonPreferences):
                 grid = box.grid_flow(row_major=True, columns=3, even_columns=True)
             col = grid.column()
             col.label(text=td.tools_per_mode[mode]['name'])
-            for tool in td.tools_per_mode[mode]['tools']:
-                col.prop(tool['pref'], 'enabled', text=tool['name'])
+            for index, tool in enumerate(td.tools_per_mode[mode]['tools']):
+                pref = get_tool_preference(mode, index)
+                name = tool['as_asset']['name'] if use_brush_assets and 'as_asset' in tool and 'name' in tool['as_asset'] \
+                    else tool['name']
+                col.prop(pref, 'enabled', text=name)
 
-        # Save preference definition
-        layout.separator(factor=0)
+        # Brush assets
+        if bpy.app.version < (4, 3, 0):
+            return
+
         box = layout.box()
+        box.label(text='Brush Assets')
         col = box.column(align=True)
-        row = col.row()
-        row.operator('gp_tool_wheel.save_pref_definition')
-        row.operator('gp_tool_wheel.load_pref_definition')
-        col.separator(factor=1.5)
-        col.label(text='You can save and load the GP Tool Wheel preferences for distribution to other Blender installations.')
+        col.separator(factor=1)
+        col.label(text='Tip: instead of making manual changes here, you can right-click on a brush in', icon='BRUSHES_ALL')
+        col.label(text="the brush asset shelf and choose 'Set as Tool in GP Tool Wheel...'.")
+
+        col = box.column()
+        col.separator(factor=1.0)
+        col.label(text='Draw Mode')
+        sub = col.column()
+
+        tool = td.tools_per_mode['draw']['tools'][td.tint_tool_index]
+        row = sub.row().split(factor=0.25)
+        row.label(text='')
+        row.column().label(text=tool['name'])
+        pref = get_tool_preference('draw', td.tint_tool_index)
+        sub.prop(pref, 'asset_lib_type', text='Library Type')
+        sub.prop(pref, 'asset_lib_id', text='Library')
+        sub.prop(pref, 'asset_id', text='Asset')
+
+        col = box.column()
+        col.separator(factor=4)
+        col.label(text='Sculpt Mode')
+        sub = col.column()
+
+        for index, tool in enumerate(td.tools_per_mode['sculpt']['tools']):
+            pref = get_tool_preference('sculpt', index)
+            row = sub.row().split(factor=0.25)
+            row.label(text='')
+            row.column().label(text=tool['name'])
+            sub.prop(pref, 'asset_lib_type', text='Library Type')
+            sub.prop(pref, 'asset_lib_id', text='Library')
+            sub.prop(pref, 'asset_id', text='Asset')
+            sub.separator(factor=1.0)
 
 
 # When not set already, set default tool preferences
@@ -365,6 +423,17 @@ def set_default_preferences():
                 pref.mode = mode
                 pref.tool_index = i
                 pref.enabled = tool['default']
+
+    # When brush asset data is not set, add it
+    for mode in td.modes:
+        for i, tool in enumerate(td.tools_per_mode[mode]['tools']):
+            if 'as_asset' in tool and tool['as_asset']['tool'] == '':
+                pref = get_tool_preference(mode, i)
+                asset = tool['as_asset']
+                if pref.asset_lib_type == '':
+                    pref.asset_lib_type = asset['asset_library_type']
+                    pref.asset_lib_id = asset['asset_library_identifier']
+                    pref.asset_id = asset['relative_asset_identifier']
 
     # When there is no mode order, add it
     mode_order = addon_prefs.mode_order
@@ -385,6 +454,15 @@ def set_default_preferences():
         addon_prefs.kmi_oskey = False
 
 
+# Get tool preference (by mode and tool index)
+def get_tool_preference(mode, index):
+    prefs = bpy.context.preferences.addons[__package__].preferences
+    for pref in prefs.tools:
+        if pref.mode == mode and pref.tool_index == index:
+            return pref
+    return None
+
+
 # Get the tool preferences
 def get_tool_preferences():
     # Get tool preferences
@@ -401,6 +479,12 @@ def get_tool_preferences():
         tool['enabled'] = pref.enabled
         tool['pref'] = pref
 
+        if 'as_asset' in tool and tool['as_asset']['tool'] == '' and pref.asset_id:
+            asset = tool['as_asset']
+            asset['asset_library_type'] = pref.asset_lib_type
+            asset['asset_library_identifier'] = pref.asset_lib_id
+            asset['relative_asset_identifier'] = pref.asset_id
+
     # Check for new tools, not yet set in list
     for mode in td.modes:
         for i, tool in enumerate(td.tools_per_mode[mode]['tools']):
@@ -412,10 +496,133 @@ def get_tool_preferences():
                 tool['enabled'] = pref.enabled
                 tool['pref'] = pref
 
+                if 'as_asset' in tool and tool['as_asset']['tool'] == '' and pref.asset_id:
+                    asset = tool['as_asset']
+                    asset['asset_library_type'] = pref.asset_lib_type
+                    asset['asset_library_identifier'] = pref.asset_lib_id
+                    asset['relative_asset_identifier'] = pref.asset_id
+
     # Get mode order
     td.mode_order = []
     for pref in prefs.mode_order:
         td.mode_order.append(pref.order)
+
+
+class GPENCIL_OT_link_brush_to_gp_tool_wheel(Operator):
+    '''Link current brush asset to a tool in the GP Tool Wheel'''
+    bl_idname = "gpencil.link_brush_to_gp_tool_wheel"
+    bl_label = "Set Brush in GP Tool Wheel"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    brush_items_draw: EnumProperty(items=[('0', 'Tint', '')], name='Tool')
+    brush_items_sculpt: EnumProperty(items=[
+        ('0', 'Smooth', ''),
+        ('1', 'Thickness', ''),
+        ('2', 'Strength', ''),
+        ('3', 'Randomize', ''),
+        ('4', 'Grab', ''),
+        ('5', 'Pull', ''),
+        ('6', 'Twist', ''),
+        ('7', 'Pinch', ''),
+        ('8', 'Clone', ''),
+    ], name='Tool')
+
+    sculpt_tools = ['smooth', 'thickness', 'strength', 'randomize', 'grab', 'pull', 'twist', 'pinch', 'clone']
+    brush_name = ''
+
+    @classmethod
+    def poll(cls, context):
+        if context.mode not in ['PAINT_GREASE_PENCIL', 'SCULPT_GREASE_PENCIL']:
+            return False
+
+        brush_asset = None
+        if context.mode == 'PAINT_GREASE_PENCIL':
+            brush_asset = context.tool_settings.gpencil_paint.brush_asset_reference
+        elif context.mode == 'SCULPT_GREASE_PENCIL':
+            brush_asset = context.tool_settings.gpencil_sculpt_paint.brush_asset_reference
+        return brush_asset is not None
+
+    def invoke(self, context, _):
+        # Get brush asset name (part after last / in relative_asset_identifier)
+        brush_asset = None
+        if context.mode == 'PAINT_GREASE_PENCIL':
+            brush_asset = context.tool_settings.gpencil_paint.brush_asset_reference
+        elif context.mode == 'SCULPT_GREASE_PENCIL':
+            brush_asset = context.tool_settings.gpencil_sculpt_paint.brush_asset_reference
+        brush_name = brush_asset.relative_asset_identifier
+        brush_name = brush_name[brush_name.rfind('/') + 1:]
+        self.brush_name = brush_name
+
+        # And make a tool guess, based on the brush name
+        if context.mode == 'SCULPT_GREASE_PENCIL':
+            brush_name_parts = brush_name.lower().split()
+            for part in brush_name_parts:
+                if part and part in self.sculpt_tools:
+                    tool_index = self.sculpt_tools.index(part)
+                    self.brush_items_sculpt = str(tool_index)
+                    break
+
+        # Invoke dialog
+        return context.window_manager.invoke_props_dialog(self, width=240)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text=f"Use brush '{self.brush_name}' for tool:")
+        if context.mode == 'PAINT_GREASE_PENCIL':
+            layout.props_enum(self, 'brush_items_draw')
+        if context.mode == 'SCULPT_GREASE_PENCIL':
+            layout.props_enum(self, 'brush_items_sculpt')
+        layout.label(text="in the GP Tool Wheel.")
+
+    def execute(self, context):
+        wheel_tool_asset = None
+        mode = ''
+        index = 0
+        if context.mode == 'PAINT_GREASE_PENCIL':
+            brush_asset = context.tool_settings.gpencil_paint.brush_asset_reference
+            wheel_tool_asset = td.tools_per_mode['draw']['tools'][td.tint_tool_index]['as_asset']
+            mode = 'draw'
+            index = td.tint_tool_index
+        if context.mode == 'SCULPT_GREASE_PENCIL':
+            brush_asset = context.tool_settings.gpencil_sculpt_paint.brush_asset_reference
+            wheel_tool_asset = td.tools_per_mode['sculpt']['tools'][int(self.brush_items_sculpt)]['as_asset']
+            mode = 'sculpt'
+            index = int(self.brush_items_sculpt)
+
+        if wheel_tool_asset is not None:
+            wheel_tool_asset['asset_library_type'] = brush_asset.asset_library_type
+            wheel_tool_asset['asset_library_identifier'] = brush_asset.asset_library_identifier
+            wheel_tool_asset['relative_asset_identifier'] = brush_asset.relative_asset_identifier
+
+            # Update tool in addon preferences
+            pref = get_tool_preference(mode, index)
+            pref.asset_lib_type = brush_asset.asset_library_type
+            pref.asset_lib_id = brush_asset.asset_library_identifier
+            pref.asset_id = brush_asset.relative_asset_identifier
+            context.preferences.is_dirty = True
+
+        return {'FINISHED'}
+
+
+def brush_asset_context_menu_draw(self, _):
+    layout = self.layout
+    layout.separator()
+    layout.operator("gpencil.link_brush_to_gp_tool_wheel", text="Set as Tool in GP Tool Wheel...")
+
+
+# Add operator to brush asset context menu for linking a brush asset to a tool in the tool wheel
+def add_brush_asset_context_menu_item():
+    if bpy.app.version >= (4, 3, 0):
+        if hasattr(bpy.types.VIEW3D_MT_brush_context_menu.draw, '_draw_funcs'):
+            if brush_asset_context_menu_draw in bpy.types.VIEW3D_MT_brush_context_menu.draw._draw_funcs:
+                return
+        bpy.types.VIEW3D_MT_brush_context_menu.append(brush_asset_context_menu_draw)
+
+
+# Remove operator from brush asset context menu
+def remove_brush_asset_context_menu_item():
+    if bpy.app.version >= (4, 3, 0):
+        bpy.types.VIEW3D_MT_brush_context_menu.remove(brush_asset_context_menu_draw)
 
 
 # Get show hints preference settings

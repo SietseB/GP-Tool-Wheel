@@ -23,11 +23,12 @@ You can customize your wheel in the add-on preferences.
 
 Up to Blender 4.1, go to `Edit` > `Preferences...` > `Add-ons` and look for `3D View: GP Tool Wheel`.
 
-For Blender 4.2 and higher, go to `Edit` > `Preferences...` > `Extensions` and look for `GP Tool Wheel`. 
+For Blender 4.2 and higher, go to `Edit` > `Preferences...` > `Add-ons` and look for `GP Tool Wheel`. 
 
 Click on the arrow on the left.
 
-Here you can compose your ideal, tailor made wheel. Perhaps you want to change it in a kind of 'Quick favorites' menu, with only the modes and tools you often use. Or assign <kbd>Tab</kbd> as shortcut, replacing the default pie menu.
+Here you can compose your ideal, tailor made wheel. Perhaps you want to change it in a kind of 'Quick favorites' menu, with only the modes and tools you often use. 
+Or assign <kbd>Tab</kbd> as shortcut, replacing the default pie menu.
 
 
 > **Circle of GP life:** defining the order of modes
@@ -44,10 +45,31 @@ Here you can compose your ideal, tailor made wheel. Perhaps you want to change i
 > ![Save and load preferences to/from definition file](docs/images/gp_tool_wheel_preferences_3.png)
 
 
+## Link brush assets (new in Blender 4.3)
+
+Blender 4.3 ships with the new Brush Asset Shelf, with default brushes and the option to define custom brushes yourself.
+For Grease Pencil, the Brush Shelf is active in Draw and Sculpt Mode.
+By default, GP Tool Wheel uses the _Essential_ brush assets that ship with Blender. 
+
+But you can assign a custom brush to a tool in the wheel. Right-click on the brush and choose _Set as Tool in GP Tool Wheel..._
+
+![Brush asset context menu with link brush to GP Tool Wheel](docs/images/link_brush_to_tool_1.jpg)
+
+In the dialog that follows, select the tool in the GP Tool Wheel and click OK.
+
+![Link brush to a tool in the GP Tool Wheel](docs/images/link_brush_to_tool_2.jpg)
+
+Now this brush will be activated when you click on it in the wheel.
+
+
 ## Installation
 GP Tool Wheel is suited for Blender 3.0 and higher.
 
-Up to Blender 4.1, installation of the add-on is done in the usual Blender way:
+For Blender 4.2 and higher, the add-on is [available as an extension](https://extensions.blender.org/add-ons/grease-pencil-tool-wheel/) at the Blender Extension platform. 
+Click on the big blue 'Get Add-on' button and follow the instructions.
+
+
+Up to Blender 4.1 (or when you don't want to use the Extension platform), installation of the add-on is done in the usual Blender 'legacy' way:
 - Download [the latest release](https://github.com/SietseB/GP-Tool-Wheel/releases). (Make sure it is a zip file, not automatically unzipped.)
 - In Blender, go to `Edit` > `Preferences...` > `Add-ons`. Click on `Install...` and select the zip file.
 - When the stars are in your favour, the add-on appears. Activate it.
@@ -59,7 +81,10 @@ Up to Blender 4.1, installation of the add-on is done in the usual Blender way:
 
 
 ## Changelog
-- v1.0.5 - 2024-05-23
+- v1.0.6 – 2024-11-01
+  - Adapted for Blender 4.3, with the new Brush Asset Shelf
+  - New feature: Assign a custom brush in the Asset Shelf to a tool in the GP Tool Wheel
+- v1.0.5 – 2024-05-23
   - Now uses UI scale: bigger wheel when UI scale is higher
   - Support for Grease Pencil v3
   - Save and load preferences to a custom file path
