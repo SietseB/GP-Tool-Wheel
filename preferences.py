@@ -362,7 +362,8 @@ class GPToolWheelPreferences(AddonPreferences):
                 grid = box.grid_flow(row_major=True, columns=3, even_columns=True)
             col = grid.column()
             col.label(text=td.tools_per_mode[mode]['name'])
-            for index, tool in enumerate(td.tools_per_mode[mode]['tools']):
+            for index in td.tools_per_mode[mode]['tool_order']:
+                tool = td.tools_per_mode[mode]['tools'][index]
                 pref = get_tool_preference(mode, index)
                 name = tool['as_asset']['name'] if use_brush_assets and 'as_asset' in tool and 'name' in tool['as_asset'] \
                     else tool['name']

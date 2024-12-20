@@ -59,8 +59,9 @@ class ToolData():
             'mode': 'WEIGHT_GPENCIL',
             'modev3': 'WEIGHT_GREASE_PENCIL',
             'active_tools': [],
+            'tool_order': [0, 1, 2, 3, 4],
             'tools': [
-                {'name': 'Weight', 'tool': 'builtin_brush.Weight', 'icon': 'weight_paint_weight', 'default': True, 'as_asset': {
+                {'name': 'Paint', 'tool': 'builtin_brush.Weight', 'icon': 'weight_paint_draw', 'default': True, 'as_asset': {
                     'tool': 'builtin.brush',
                     'asset_library_type': '',
                     'asset_library_identifier': '',
@@ -98,6 +99,7 @@ class ToolData():
             'mode': 'PAINT_GPENCIL',
             'modev3': 'PAINT_GREASE_PENCIL',
             'active_tools': [],
+            'tool_order': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
             'tools': [
                 {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'draw_draw', 'default': True, 'as_asset': {
                     'tool': 'builtin.brush',
@@ -186,6 +188,7 @@ class ToolData():
             'mode': 'VERTEX_GPENCIL',
             'modev3': 'VERTEX_GREASE_PENCIL',
             'active_tools': [],
+            'tool_order': [0, 1, 2, 3, 4],
             'tools': [
                 {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'vertex_paint_draw', 'default': True, 'as_asset': {
                     'tool': 'builtin.brush',
@@ -225,13 +228,14 @@ class ToolData():
             'mode': 'EDIT_GPENCIL',
             'modev3': 'EDIT_GREASE_PENCIL',
             'active_tools': [],
+            'tool_order': [11, 0, 12, 13, 14, 1, 2, 3, 15, 4, 5, 6, 7, 8, 16, 9, 10],
             'tools': [
                 {'name': 'Select Box', 'tool': 'builtin.select_box', 'icon': 'object_select', 'default': True},
                 {'name': 'Move', 'tool': 'builtin.move', 'icon': 'object_move', 'default': True},
                 {'name': 'Rotate', 'tool': 'builtin.rotate', 'icon': 'object_rotate', 'default': True},
                 {'name': 'Scale', 'tool': 'builtin.scale', 'icon': 'object_scale', 'default': True},
                 {'name': 'Transform', 'tool': 'builtin.transform', 'icon': 'object_transform', 'default': True},
-                {'name': 'Extrude', 'tool': 'builtin.extrude', 'icon': 'edit_extrude', 'default': True},
+                {'name': 'Extrude', 'tool': 'builtin.extrude', 'icon': 'edit_extrude', 'default': False},
                 {'name': 'Radius', 'tool': 'builtin.radius', 'icon': 'edit_radius', 'default': True},
                 {'name': 'Bend', 'tool': 'builtin.bend', 'icon': 'edit_bend', 'default': False},
                 {'name': 'Shear', 'tool': 'builtin.shear', 'icon': 'edit_shear', 'default': False},
@@ -245,6 +249,13 @@ class ToolData():
                         'relative_asset_identifier': ''
                     }},
                 {'name': 'Interpolate', 'tool': 'builtin.interpolate', 'icon': 'edit_interpolate', 'default': True},
+
+                {'name': 'Tweak', 'tool': 'builtin.select', 'icon': 'edit_tweak', 'default': False},
+                {'name': 'Select Circle', 'tool': 'builtin.select_circle', 'icon': 'edit_select_circle', 'default': False},
+                {'name': 'Select Lasso', 'tool': 'builtin.select_lasso', 'icon': 'edit_select_lasso', 'default': False},
+                {'name': 'Cursor', 'tool': 'builtin.cursor', 'icon': 'edit_cursor', 'default': False},
+                {'name': 'Scale Cage', 'tool': 'builtin.scale_cage', 'icon': 'edit_scale_cage', 'default': False},
+                {'name': 'To Sphere', 'tool': 'builtin.to_sphere', 'icon': 'edit_to_sphere', 'default': False},
             ]
         }
         s['sculpt'] = {
@@ -253,6 +264,7 @@ class ToolData():
             'mode': 'SCULPT_GPENCIL',
             'modev3': 'SCULPT_GREASE_PENCIL',
             'active_tools': [],
+            'tool_order': [0, 1, 2, 3, 4, 5, 6, 7, 8],
             'tools': [
                 {'name': 'Smooth', 'tool': 'builtin_brush.Smooth', 'icon': 'sculpt_smooth', 'default': True, 'as_asset': {
                     'tool': '',
@@ -317,6 +329,7 @@ class ToolData():
             'mode': 'OBJECT',
             'modev3': 'OBJECT',
             'active_tools': [],
+            'tool_order': [0, 1, 2, 3, 4, 5, 6, 7, 8],
             'tools': [
                 {'name': 'Select Box', 'tool': 'builtin.select_box', 'icon': 'object_select', 'default': True},
                 {'name': 'Move', 'tool': 'builtin.move', 'icon': 'object_move', 'default': True},
@@ -346,7 +359,8 @@ class ToolData():
             # Collect enabled tools
             mode_obj = self.tools_per_mode[mode]
             active_tools = []
-            for tool_i, tool in enumerate(mode_obj['tools']):
+            for tool_i in mode_obj['tool_order']:
+                tool = mode_obj['tools'][tool_i]
                 if tool['enabled']:
                     active_tools.append(tool_i)
             mode_obj['active_tools'] = active_tools
