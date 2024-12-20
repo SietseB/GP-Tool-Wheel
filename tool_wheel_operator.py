@@ -187,25 +187,12 @@ class GPENCIL_OT_tool_wheel(Operator):
         # Set cursor to default
         context.window.cursor_modal_set('DEFAULT')
 
-        # An active brush cursor (red circle) can visually interfere with tool wheel,
-        # so set brush size temporarily to 2 pixels.
+        # Hide brush cursor (the potentially big circle)
         ts = context.tool_settings
-        for i, brush in enumerate([ts.gpencil_paint.brush,
-                                   ts.gpencil_sculpt_paint.brush,
-                                   ts.gpencil_vertex_paint.brush,
-                                   ts.gpencil_weight_paint.brush,
-                                   ts.unified_paint_settings]):
-            if brush is not None:
-                self._brush_sizes[i] = brush.size
-                brush.size = 2
-        for i, brush in enumerate([ts.gpencil_paint.brush,
-                                   ts.gpencil_sculpt_paint.brush,
-                                   ts.gpencil_vertex_paint.brush,
-                                   ts.gpencil_weight_paint.brush,
-                                   ts.unified_paint_settings]):
-            if brush is not None:
-                self._unprojected_radius[i] = brush.unprojected_radius
-                brush.unprojected_radius = 0.015
+        ts.gpencil_paint.show_brush = False
+        ts.gpencil_sculpt_paint.show_brush = False
+        ts.gpencil_vertex_paint.show_brush = False
+        ts.gpencil_weight_paint.show_brush = False
 
         # Add draw handler to 3D viewport
         args = (context,)
@@ -222,22 +209,12 @@ class GPENCIL_OT_tool_wheel(Operator):
         # Restore cursor
         context.window.cursor_modal_restore()
 
-        # Restore brush size
+        # Show brush cursor
         ts = context.tool_settings
-        for i, brush in enumerate([ts.gpencil_paint.brush,
-                                   ts.gpencil_sculpt_paint.brush,
-                                   ts.gpencil_vertex_paint.brush,
-                                   ts.gpencil_weight_paint.brush,
-                                   ts.unified_paint_settings]):
-            if brush is not None:
-                brush.unprojected_radius = self._unprojected_radius[i]
-        for i, brush in enumerate([ts.gpencil_paint.brush,
-                                   ts.gpencil_sculpt_paint.brush,
-                                   ts.gpencil_vertex_paint.brush,
-                                   ts.gpencil_weight_paint.brush,
-                                   ts.unified_paint_settings]):
-            if brush is not None:
-                brush.size = self._brush_sizes[i]
+        ts.gpencil_paint.show_brush = True
+        ts.gpencil_sculpt_paint.show_brush = True
+        ts.gpencil_vertex_paint.show_brush = True
+        ts.gpencil_weight_paint.show_brush = True
 
         # Remove draw handler
         context.area.spaces[0].draw_handler_remove(self._draw_handle, 'WINDOW')
