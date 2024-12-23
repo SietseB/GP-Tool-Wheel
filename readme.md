@@ -81,6 +81,9 @@ Up to Blender 4.1 (or when you don't want to use the Extension platform), instal
 
 
 ## Changelog
+- v1.0.7 – 2024-12-23
+  - Fix for unintended change of brush size when using the wheel
+  - Tools in Edit mode completed: Tweak, Select Circle, Select Lasso, Cursor, Scale Cage and To Sphere added
 - v1.0.6 – 2024-11-01
   - Adapted for Blender 4.3, with the new Brush Asset Shelf
   - New feature: Assign a custom brush in the Asset Shelf to a tool in the GP Tool Wheel
