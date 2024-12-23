@@ -267,7 +267,7 @@ class ToolWheel():
         self.sep_color = self.get_adjusted_color(list(wheel_colors.outline)[0:3] + [1], -0.03)
         self.sep_color_sel = self.get_adjusted_color(self.sep_color, -0.07)
         self.text_color = wheel_colors.text
-        self.highlight_color = self.get_adjusted_color(base_color, 0.05)
+        self.highlight_color = self.get_adjusted_color(base_color, 0.07)
 
         # Init shaders
         self.shader_icon_bg = gpu.shader.from_builtin(COLOR_SHADER)

@@ -1,7 +1,7 @@
 bl_info = {
     "name": "GP Tool Wheel",
     "author": "Sietse Brouwer",
-    "version": (1, 0, 6),
+    "version": (1, 0, 7),
     "blender": (3, 0, 0),
     "description": "Extended pie menu for selecting Grease Pencil tools quickly.",
     "doc_url": "https://github.com/SietseB/GP-Tool-Wheel",
