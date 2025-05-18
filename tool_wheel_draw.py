@@ -18,6 +18,8 @@ from .tool_data import tool_data as td
 
 # Constants
 COLOR_SHADER = 'UNIFORM_COLOR' if bpy.app.version >= (3, 4, 0) else '2D_UNIFORM_COLOR'
+LINE_SHADER = 'POLYLINE_UNIFORM_COLOR' if bpy.app.version >= (
+    4, 5, 0) else 'UNIFORM_COLOR' if bpy.app.version >= (3, 4, 0) else '2D_UNIFORM_COLOR'
 
 
 class ToolButton():
@@ -352,6 +354,7 @@ class ToolWheel():
         ui_scale = context.preferences.system.ui_scale
         ipad = ToolButton.BUTTON_IMG_PADDING * ui_scale
         gpu.state.blend_set('ALPHA')
+        gpu.state.line_width_set(1.0)
         self.active_mode = ''
         use_brush_assets = (bpy.app.version >= (4, 3, 0))
 
@@ -381,6 +384,8 @@ class ToolWheel():
                         self.center_y - 24 * ui_scale), 48 * ui_scale, 48 * ui_scale)
 
         # Iterate boxes (modes)
+        line_shader = gpu.shader.from_builtin(LINE_SHADER)
+        line_shader.bind()
         active_tool = -1
         for box in self.boxes:
             # Draw box (in selected state or not)
@@ -422,21 +427,22 @@ class ToolWheel():
                 if button.separator_right or button.separator_top:
                     coords = []
                     if button.separator_right:
-                        x0 = button.x + button.w + ModeBox.BOX_PADDING * ui_scale + box.sep_offset
-                        y0 = button.y - ModeBox.BOX_PADDING * ui_scale
-                        y1 = button.y - button.h
+                        x0 = round(button.x + button.w + ModeBox.BOX_PADDING * ui_scale + box.sep_offset) + 0.5
+                        y0 = round(button.y - ModeBox.BOX_PADDING * ui_scale) + 0.5
+                        y1 = round(button.y - button.h) + 0.5
                         coords.append((x0, y0))
                         coords.append((x0, y1))
                     if button.separator_top:
-                        x0 = box.x + ModeBox.BOX_PADDING * ui_scale + box.sep_offset
-                        x1 = box.x + box.w - ModeBox.BOX_PADDING * ui_scale + box.sep_offset
-                        y0 = button.y + box.sep_offset
+                        x0 = round(box.x + ModeBox.BOX_PADDING * ui_scale + box.sep_offset) + 0.5
+                        x1 = round(box.x + box.w - ModeBox.BOX_PADDING * ui_scale + box.sep_offset) + 0.5
+                        y0 = round(button.y + box.sep_offset) + 0.5
                         coords.append((x0, y0))
                         coords.append((x1, y0))
-                    batch = batch_for_shader(self.shader_icon_bg, 'LINES', {'pos': coords})
+
+                    batch = batch_for_shader(line_shader, 'LINES', {'pos': coords})
                     color = self.sep_color_sel if box_is_selected else self.sep_color
-                    self.shader_icon_bg.uniform_float('color', color)
-                    batch.draw(self.shader_icon_bg)
+                    line_shader.uniform_float('color', color)
+                    batch.draw(line_shader)
 
         self.active_tool = active_tool
 
