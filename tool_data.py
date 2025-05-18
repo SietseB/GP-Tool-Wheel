@@ -40,12 +40,6 @@ class ToolData():
             [0, 1, 2, 3, 5],
             [0, 1, 2, 3, 4, 5],
         ]
-        # Non-draw brush assets in Draw mode
-        self.non_draw_assets = [
-            '/Fill',
-            '/Tint',
-            '/Eraser',
-        ]
         # Tool index for Draw tool
         self.draw_tool_index = 0
         self.tint_tool_index = 3
@@ -53,46 +47,6 @@ class ToolData():
         # Available tools per mode
         self.tools_per_mode = {}
         s = self.tools_per_mode
-        s['weight'] = {
-            'name': 'Weight Paint',
-            'name_short': 'Weight',
-            'mode': 'WEIGHT_GPENCIL',
-            'modev3': 'WEIGHT_GREASE_PENCIL',
-            'active_tools': [],
-            'tool_order': [0, 1, 2, 3, 4],
-            'tools': [
-                {'name': 'Paint', 'tool': 'builtin_brush.Weight', 'icon': 'weight_paint_draw', 'default': True, 'as_asset': {
-                    'tool': 'builtin.brush',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': True, 'as_asset': {
-                    'tool': 'builtin_brush.blur',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': True, 'as_asset': {
-                    'tool': 'builtin_brush.average',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': True, 'as_asset': {
-                    'tool': 'builtin_brush.smear',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-                {'name': 'Gradient', 'tool': 'builtin_brush.Gradient', 'icon': 'weight_paint_gradient', 'default': False, 'as_asset': {
-                    'tool': 'builtin_brush.gradient',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-            ]
-        }
         s['draw'] = {
             'name': 'Draw Mode',
             'name_short': 'Draw',
@@ -176,46 +130,6 @@ class ToolData():
                 }},
                 {'name': 'Interpolate', 'tool': 'builtin.interpolate', 'icon': 'edit_interpolate', 'default': False, 'as_asset': {
                     'tool': 'builtin.interpolate',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-            ]
-        }
-        s['vertex'] = {
-            'name': 'Vertex Paint',
-            'name_short': 'Vertex',
-            'mode': 'VERTEX_GPENCIL',
-            'modev3': 'VERTEX_GREASE_PENCIL',
-            'active_tools': [],
-            'tool_order': [0, 1, 2, 3, 4],
-            'tools': [
-                {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'vertex_paint_draw', 'default': True, 'as_asset': {
-                    'tool': 'builtin.brush',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': True, 'as_asset': {
-                    'tool': 'builtin_brush.blur',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': True, 'as_asset': {
-                    'tool': 'builtin_brush.average',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': True, 'as_asset': {
-                    'tool': 'builtin_brush.smear',
-                    'asset_library_type': '',
-                    'asset_library_identifier': '',
-                    'relative_asset_identifier': ''
-                }},
-                {'name': 'Replace', 'tool': 'builtin_brush.Replace', 'icon': 'vertex_paint_replace', 'default': True, 'as_asset': {
-                    'tool': 'builtin_brush.replace',
                     'asset_library_type': '',
                     'asset_library_identifier': '',
                     'relative_asset_identifier': ''
@@ -320,6 +234,86 @@ class ToolData():
                     'asset_library_type': 'ESSENTIALS',
                     'asset_library_identifier': '',
                     'relative_asset_identifier': 'brushes/essentials_brushes-gp_sculpt.blend/Brush/Clone'
+                }},
+            ]
+        }
+        s['vertex'] = {
+            'name': 'Vertex Paint',
+            'name_short': 'Vertex',
+            'mode': 'VERTEX_GPENCIL',
+            'modev3': 'VERTEX_GREASE_PENCIL',
+            'active_tools': [],
+            'tool_order': [0, 1, 2, 3, 4],
+            'tools': [
+                {'name': 'Draw', 'tool': 'builtin_brush.Draw', 'icon': 'vertex_paint_draw', 'default': True, 'as_asset': {
+                    'tool': 'builtin.brush',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.blur',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.average',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.smear',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Replace', 'tool': 'builtin_brush.Replace', 'icon': 'vertex_paint_replace', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.replace',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+            ]
+        }
+        s['weight'] = {
+            'name': 'Weight Paint',
+            'name_short': 'Weight',
+            'mode': 'WEIGHT_GPENCIL',
+            'modev3': 'WEIGHT_GREASE_PENCIL',
+            'active_tools': [],
+            'tool_order': [0, 1, 2, 3, 4],
+            'tools': [
+                {'name': 'Paint', 'tool': 'builtin_brush.Weight', 'icon': 'weight_paint_draw', 'default': True, 'as_asset': {
+                    'tool': 'builtin.brush',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Blur', 'tool': 'builtin_brush.Blur', 'icon': 'vertex_paint_blur', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.blur',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Average', 'tool': 'builtin_brush.Average', 'icon': 'vertex_paint_average', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.average',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Smear', 'tool': 'builtin_brush.Smear', 'icon': 'vertex_paint_smear', 'default': True, 'as_asset': {
+                    'tool': 'builtin_brush.smear',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
+                }},
+                {'name': 'Gradient', 'tool': 'builtin_brush.Gradient', 'icon': 'weight_paint_gradient', 'default': False, 'as_asset': {
+                    'tool': 'builtin_brush.gradient',
+                    'asset_library_type': '',
+                    'asset_library_identifier': '',
+                    'relative_asset_identifier': ''
                 }},
             ]
         }

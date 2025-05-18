@@ -81,6 +81,11 @@ Up to Blender 4.1 (or when you don't want to use the Extension platform), instal
 
 
 ## Changelog
+- v1.0.9 – 2025-05-18
+  - Fix for separator lines not showing in some Blender versions
+- v1.0.8 – 2025-05-18
+  - Switching from Tint tool to Brush tool is handled better
+  - Fix for draw artefacts
 - v1.0.7 – 2024-12-23
   - Fix for unintended change of brush size when using the wheel
   - Tools in Edit mode completed: Tweak, Select Circle, Select Lasso, Cursor, Scale Cage and To Sphere added

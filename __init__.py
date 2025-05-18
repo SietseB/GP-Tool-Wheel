@@ -30,6 +30,10 @@ def addon_init():
     # Load tool icons
     tool_data.tool_data.get_tool_icon_textures()
 
+    # Remember last used draw brush
+    if bpy.app.version >= (4, 3, 0):
+        bpy.app.timers.register(tool_wheel_operator.store_active_draw_brush, first_interval=2.0, persistent=True)
+
 
 # Addon registration
 def register():

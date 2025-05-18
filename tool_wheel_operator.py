@@ -12,7 +12,7 @@ class GPENCIL_OT_tool_wheel(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     _draw_handle = None
-    _brush_sizes = [0, 0, 0, 0, 0]
+    _show_brush = [True, True, True, True]
     _unprojected_radius = [0.0, 0.0, 0.0, 0.0, 0.0]
     tool_wheel = tool_wheel_draw.ToolWheel()
 
@@ -36,30 +36,15 @@ class GPENCIL_OT_tool_wheel(Operator):
 
         # From 4.3 on, use brush assets
         use_brush_assets = (bpy.app.version >= (4, 3, 0))
-        brush_asset = None
 
-        # Get selected mode.
+        # Get selected mode
         mode = td.tools_per_mode[new_mode]
 
-        # Remember last used draw brush
-        if use_brush_assets and context.mode == 'PAINT_GREASE_PENCIL':
-            brush_asset = context.tool_settings.gpencil_paint.brush_asset_reference
-            if brush_asset is not None:
-                # When the brush asset is a fill, tint or eraser, we don't store it.
-                # We only want to remember real draw brushes.
-                is_draw_brush = True
-                for non_draw_brush in td.non_draw_assets:
-                    if brush_asset.relative_asset_identifier.find(non_draw_brush) != -1:
-                        is_draw_brush = False
-                        break
+        # Remember last used draw brush asset
+        if use_brush_assets and not (new_mode == 'draw' and new_tool == td.draw_tool_index):
+            store_active_draw_brush()
 
-                if is_draw_brush:
-                    # Store the draw brush asset
-                    td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']['asset_library_type'] = brush_asset.asset_library_type
-                    td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']['asset_library_identifier'] = brush_asset.asset_library_identifier
-                    td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']['relative_asset_identifier'] = brush_asset.relative_asset_identifier
-
-        # Switch to mode.
+        # Switch to mode
         if is_gp_legacy and mode['mode'] != context.mode:
             match(new_mode):
                 case 'object':
@@ -117,35 +102,44 @@ class GPENCIL_OT_tool_wheel(Operator):
                         bpy.ops.object.gpencil_add(type='EMPTY')
                     else:
                         bpy.ops.object.grease_pencil_add(type='EMPTY')
+            return {'FINISHED'}
+
+        # Switch to tool
+        if tool_as_asset is None:
+            bpy.ops.wm.tool_set_by_id(name=tool)
         else:
-            # Switch to tool
-            if tool_as_asset is None:
-                bpy.ops.wm.tool_set_by_id(name=tool)
+            # From 4.3 on, use brush assets for drawing and sculpting and tools for all the others
+            use_asset = False if tool_as_asset['tool'] else True
+
+            # Edge case: when switching from a Tint brush to the Draw tool,
+            # use the previously stored draw brush asset.
+            if new_mode == 'draw' and new_tool == td.draw_tool_index:
+                use_asset = context.tool_settings.gpencil_paint.brush.gpencil_tool == 'TINT'
+
+            # Switch to the new tool or brush asset
+            if use_asset:
+                # Set brush asset
+                bpy.ops.brush.asset_activate(asset_library_type=tool_as_asset['asset_library_type'],
+                                             asset_library_identifier=tool_as_asset['asset_library_identifier'],
+                                             relative_asset_identifier=tool_as_asset['relative_asset_identifier'])
             else:
-                # From 4.3 on, use brush assets for drawing and sculpting and tools for all the others
-                use_asset = False if tool_as_asset['tool'] else True
+                # Set tool
+                bpy.ops.wm.tool_set_by_id(name=tool_as_asset['tool'])
 
-                # Edge case: when switching from from a non-draw brush to the Draw tool,
-                # use the previously stored draw brush asset.
-                if new_mode == 'draw' and mode['tools'][new_tool]['name'] == 'Draw':
-                    brush_asset = context.tool_settings.gpencil_paint.brush_asset_reference
-                    if brush_asset is not None:
-                        for non_draw_brush in td.non_draw_assets:
-                            if brush_asset.relative_asset_identifier.find(non_draw_brush) != -1:
-                                use_asset = True
-                                break
-
-                # Switch to the new tool or brush asset
-                if use_asset:
-                    # Set brush asset
-                    bpy.ops.brush.asset_activate(asset_library_type=tool_as_asset['asset_library_type'],
-                                                 asset_library_identifier=tool_as_asset['asset_library_identifier'],
-                                                 relative_asset_identifier=tool_as_asset['relative_asset_identifier'])
-                else:
-                    # Set tool
-                    bpy.ops.wm.tool_set_by_id(name=tool_as_asset['tool'])
+                # Check for unintended active Tint tool (can happen when switching from primitives to draw tool)
+                if use_brush_assets and new_mode == 'draw' and new_tool == td.draw_tool_index:
+                    bpy.app.timers.register(self.check_unintended_tint_tool, first_interval=0.1)
 
         return {'FINISHED'}
+
+    def check_unintended_tint_tool(self):
+        gp_paint = bpy.context.tool_settings.gpencil_paint
+        if gp_paint.brush is not None and gp_paint.brush.gpencil_tool == 'TINT':
+            # Switch to previously stored draw brush asset
+            tool_as_asset = td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']
+            bpy.ops.brush.asset_activate(asset_library_type=tool_as_asset['asset_library_type'],
+                                         asset_library_identifier=tool_as_asset['asset_library_identifier'],
+                                         relative_asset_identifier=tool_as_asset['relative_asset_identifier'])
 
     # Check modal events
     def modal(self, context, event):
@@ -189,10 +183,9 @@ class GPENCIL_OT_tool_wheel(Operator):
 
         # Hide brush cursor (the potentially big circle)
         ts = context.tool_settings
-        ts.gpencil_paint.show_brush = False
-        ts.gpencil_sculpt_paint.show_brush = False
-        ts.gpencil_vertex_paint.show_brush = False
-        ts.gpencil_weight_paint.show_brush = False
+        for i, mode in enumerate([ts.gpencil_paint, ts.gpencil_sculpt_paint, ts.gpencil_vertex_paint, ts.gpencil_weight_paint]):
+            self._show_brush[i] = mode.show_brush
+            mode.show_brush = False
 
         # Add draw handler to 3D viewport
         args = (context,)
@@ -209,12 +202,10 @@ class GPENCIL_OT_tool_wheel(Operator):
         # Restore cursor
         context.window.cursor_modal_restore()
 
-        # Show brush cursor
+        # Restore 'Show cursor' settings
         ts = context.tool_settings
-        ts.gpencil_paint.show_brush = True
-        ts.gpencil_sculpt_paint.show_brush = True
-        ts.gpencil_vertex_paint.show_brush = True
-        ts.gpencil_weight_paint.show_brush = True
+        for i, mode in enumerate([ts.gpencil_paint, ts.gpencil_sculpt_paint, ts.gpencil_vertex_paint, ts.gpencil_weight_paint]):
+            mode.show_brush = self._show_brush[i]
 
         # Remove draw handler
         context.area.spaces[0].draw_handler_remove(self._draw_handle, 'WINDOW')
@@ -222,3 +213,22 @@ class GPENCIL_OT_tool_wheel(Operator):
 
         # Clean up draw
         self.tool_wheel.end()
+
+
+def store_active_draw_brush():
+    context = bpy.context
+    if context.mode != 'PAINT_GREASE_PENCIL' or context.tool_settings is None or context.tool_settings.gpencil_paint is None:
+        return 2.0
+    gp_paint = context.tool_settings.gpencil_paint
+    if gp_paint.brush is None:
+        return 2.0
+    if gp_paint.brush.gpencil_tool == 'DRAW':
+        tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
+        brush_asset = gp_paint.brush_asset_reference
+        if tool.idname == 'builtin.brush' and brush_asset is not None:
+            # Store the draw brush asset
+            td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']['asset_library_type'] = brush_asset.asset_library_type
+            td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']['asset_library_identifier'] = brush_asset.asset_library_identifier
+            td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']['relative_asset_identifier'] = brush_asset.relative_asset_identifier
+
+    return 2.0
