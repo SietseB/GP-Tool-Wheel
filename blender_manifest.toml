@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
 id = "grease_pencil_tool_wheel"
-version = "1.0.9"
+version = "1.0.10"
 name = "GP Tool Wheel"
 tagline = "Extended pie menu for selecting Grease Pencil tools quickly"
 maintainer = "Sietse Brouwer <sietse@hetvrijeoog.nl>"

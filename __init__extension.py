@@ -13,9 +13,13 @@ import bpy
 
 # Inits
 def addon_init():
-    # Blender ready to assign hotkey?
-    if bpy.context.window_manager.keyconfigs.active is None:
-        # Keep interval timer alive
+    # Wait until the restricted context is ended
+    restricted_context = False
+    try:
+        _ = bpy.data.images
+    except:
+        restricted_context = True
+    if restricted_context:
         return 0.2
 
     # Set default preferences (when needed)
@@ -49,7 +53,7 @@ def register():
     bpy.utils.register_class(tool_wheel_operator.GPENCIL_OT_tool_wheel)
 
     # Delayed inits
-    bpy.app.timers.register(addon_init, first_interval=0.2)
+    bpy.app.timers.register(addon_init, first_interval=0.2, persistent=True)
 
 
 def unregister():

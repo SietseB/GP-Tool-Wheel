@@ -81,6 +81,8 @@ Up to Blender 4.1 (or when you don't want to use the Extension platform), instal
 
 
 ## Changelog
+- v1.0.10 – 2025-05-22
+  - When Blender was started by opening a .blend file in the file explorer, the add-on wouldn't initialize correctly. This is fixed now.
 - v1.0.9 – 2025-05-18
   - Fix for separator lines not showing in some Blender versions
 - v1.0.8 – 2025-05-18
