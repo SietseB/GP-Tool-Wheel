@@ -559,7 +559,9 @@ class GPENCIL_OT_link_brush_to_gp_tool_wheel(Operator):
             found = False
             if context.tool_settings.gpencil_sculpt_paint.brush is not None:
                 # Check by tool
-                tool = context.tool_settings.gpencil_sculpt_paint.brush.gpencil_sculpt_tool
+                brush = context.tool_settings.gpencil_sculpt_paint.brush
+                tool = brush.gpencil_sculpt_tool if hasattr(
+                    brush, 'gpencil_sculpt_tool') else brush.gpencil_sculpt_brush_type
                 if tool.lower() in self.sculpt_tools:
                     tool_index = self.sculpt_tools.index(tool.lower())
                     self.brush_items_sculpt = str(tool_index)

@@ -81,6 +81,8 @@ Up to Blender 4.1 (or when you don't want to use the Extension platform), instal
 
 
 ## Changelog
+- v1.0.11 – 2025-06-09
+  - Small compatibility update for Blender 5.0, `gpencil_paint.brush.gpencil_tool` property was removed
 - v1.0.10 – 2025-05-22
   - When Blender was started by opening a .blend file in the file explorer, the add-on wouldn't initialize correctly. This is fixed now.
 - v1.0.9 – 2025-05-18

@@ -114,7 +114,7 @@ class GPENCIL_OT_tool_wheel(Operator):
             # Edge case: when switching from a Tint brush to the Draw tool,
             # use the previously stored draw brush asset.
             if new_mode == 'draw' and new_tool == td.draw_tool_index:
-                use_asset = context.tool_settings.gpencil_paint.brush.gpencil_tool == 'TINT'
+                use_asset = (get_draw_brush_type(context.tool_settings.gpencil_paint) == 'TINT')
 
             # Switch to the new tool or brush asset
             if use_asset:
@@ -134,7 +134,7 @@ class GPENCIL_OT_tool_wheel(Operator):
 
     def check_unintended_tint_tool(self):
         gp_paint = bpy.context.tool_settings.gpencil_paint
-        if gp_paint.brush is not None and gp_paint.brush.gpencil_tool == 'TINT':
+        if gp_paint.brush is not None and (get_draw_brush_type(gp_paint) == 'TINT'):
             # Switch to previously stored draw brush asset
             tool_as_asset = td.tools_per_mode['draw']['tools'][td.draw_tool_index]['as_asset']
             bpy.ops.brush.asset_activate(asset_library_type=tool_as_asset['asset_library_type'],
@@ -215,6 +215,12 @@ class GPENCIL_OT_tool_wheel(Operator):
         self.tool_wheel.end()
 
 
+def get_draw_brush_type(gp_paint):
+    if hasattr(gp_paint.brush, 'gpencil_tool'):
+        return gp_paint.brush.gpencil_tool
+    return gp_paint.brush.gpencil_brush_type
+
+
 def store_active_draw_brush():
     context = bpy.context
     if context.mode != 'PAINT_GREASE_PENCIL' or context.tool_settings is None or context.tool_settings.gpencil_paint is None:
@@ -222,7 +228,7 @@ def store_active_draw_brush():
     gp_paint = context.tool_settings.gpencil_paint
     if gp_paint.brush is None:
         return 2.0
-    if gp_paint.brush.gpencil_tool == 'DRAW':
+    if get_draw_brush_type(gp_paint) == 'DRAW':
         tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
         brush_asset = gp_paint.brush_asset_reference
         if tool.idname == 'builtin.brush' and brush_asset is not None:
